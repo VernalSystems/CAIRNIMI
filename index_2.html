@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIREN — Spatial Index of Referenced Entities and Names</title>
+    <style>
+        :root {
+            --deep-space-blue: #0B1E36;
+            --tropical-green: #0B362A;;
+            --terra-orange: #FF6F3C;
+            --data-mint: #7FFFD4;
+            --bone-white: #EAEAEA;
+            --slate-gray: #B4C6C0;
+            --warm-amber: #F4C74F;
+            --silver-blue: #A2D2FF;
+            --philippine-night: #104b2a;
+            --transparent-blue: rgba(11, 48, 54, 0.8);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--deep-space-blue);
+            color: var(--bone-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--transparent-blue);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(234, 234, 234, 0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+        }
+        
+        .logo svg {
+            margin-right: 0.5rem;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: var(--bone-white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--terra-orange);
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover:after {
+            width: 100%;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 80px;
+            overflow: hidden;
+        }
+        
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(127, 255, 212, 0.1), transparent 70%),
+                        radial-gradient(circle at bottom left, rgba(255, 111, 60, 0.1), transparent 70%);
+            z-index: -1;
+        }
+        
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4rem;
+        }
+        
+        .hero-text {
+            flex: 1;
+        }
+        
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .hero-text h1 span {
+            color: var(--terra-orange);
+        }
+        .hero-text h3 span {
+            color: var(--terra-orange);
+        }
+        
+        .hero-text p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--terra-orange);
+            color: var(--deep-space-blue);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF8C5A;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 111, 60, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--bone-white);
+            border: 2px solid var(--bone-white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(234, 234, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .code-sample {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(0);
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .code-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .code-label {
+            color: var(--slate-gray);
+            width: 100px;
+            flex-shrink: 0;
+        }
+        
+        .code-value {
+            color: var(--bone-white);
+        }
+        
+        .tile-name {
+            color: var(--data-mint);
+        }
+        
+        .offset {
+            color: var(--terra-orange);
+        }
+        
+        .timestamp {
+            color: var(--warm-amber);
+        }
+        
+        .vector {
+            color: var(--silver-blue);
+        }
+        
+        /* Section: What is SIREN */
+        .section {
+            padding: 8rem 0;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .section-subtitle {
+            font-size: 1.25rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.5), rgba(11, 30, 54, 0.8));
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(127, 255, 212, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--philippine-night);
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        /* Code Structure Section */
+        .code-structure {
+            background: radial-gradient(circle at center, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-structure:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('/api/placeholder/1600/900');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        .code-breakdown {
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 24px;
+            padding: 3rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(127, 255, 212, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            
+            margin: 0 auto;
+        }
+        
+        .code-example {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: rgba(11, 30, 54, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+            position: relative;
+        }
+        
+        .code-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .component {
+            background-color: rgba(47, 62, 70, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .component:hover {
+            background-color: rgba(47, 62, 70, 0.5);
+            border-color: var(--data-mint);
+            transform: translateY(-5px);
+        }
+        
+        .component-name {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--data-mint);
+            margin-bottom: 0.75rem;
+        }
+        
+        .component-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .component-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            padding: 8rem 0;
+        }
+        
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .use-case-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .use-case-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .use-case-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .use-case-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--bone-white);
+        }
+        
+        .use-case-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 1rem;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        .use-case-link {
+            margin-top: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            color: var(--terra-orange);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .use-case-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Visual Rep Section */
+        .visual-rep {
+            background: linear-gradient(180deg, var(--deep-space-blue), rgba(11, 20, 34, 1));
+            padding: 8rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .visual-rep:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(244, 199, 79, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(127, 255, 212, 0.1) 0%, transparent 30%);
+            z-index: 0;
+        }
+        
+        .visual-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hex-examples {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 4rem 0;
+        }
+        
+        .hex-example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 220px;
+        }
+        
+        .hex-visual {
+            width: 180px;
+            height: 180px;
+            background-color: rgba(47, 62, 70, 0.5);
+            border: 1px solid var(--data-mint);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hex-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .hex-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+            text-align: center;
+        }
+        
+        /* Docs Section */
+        .docs {
+            padding: 8rem 0;
+        }
+        
+        .docs-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        
+        .docs-link {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.2), rgba(11, 30, 54, 0.4));
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--bone-white);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .docs-link:hover {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            transform: translateY(-5px);
+            border-color: rgba(127, 255, 212, 0.5);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .docs-link-icon {
+            font-size: 1.5em;
+            margin-bottom: 1rem;
+            color: var(--data-mint);
+        }
+        
+        .docs-link-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .docs-link-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(11, 20, 34, 1);
+            padding: 5rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        footer:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--data-mint), transparent);
+            opacity: 0.3;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+        
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-about {
+            font-size: 0.95rem;
+            color: rgba(234, 234, 234, 0.7);
+            margin-bottom: 1.5rem;
+            max-width: 300px;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(47, 62, 70, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bone-white);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: var(--terra-orange);
+            transform: translateY(-3px);
+        }
+        
+        .footer-links h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--bone-white);
+        }
+        
+        .footer-links ul {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(234, 234, 234, 0.7);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--terra-orange);
+        }
+        
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(47, 62, 70, 0.5);
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.6);
+        }
+        
+        .copyright span {
+            color: var(--data-mint);
+        }
+        
+        .footer-legal {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-legal a {
+            color: rgba(234, 234, 234, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-legal a:hover {
+            color: var(--terra-orange);
+        }
+        
+        /* Animated background hexagons */
+        .hex-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background-image: url('BG.png') ;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /* background-color: var(--tropical-green); */
+        }
+        
+        .hex {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(127, 255, 212, 0.05);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: float-hex 20s infinite linear;
+        }
+        
+        @keyframes float-hex {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .hero-content {
+                flex-direction: column;
+                gap: 4rem;
+            }
+            
+            .hero-text {
+                text-align: center;
+            }
+            
+            .hero-text p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .cta-buttons {
+                justify-content: center;
+            }
+            
+            .hero-visual {
+                width: 100%;
+            }
+            
+            .code-sample {
+                position: relative;
+                bottom: auto;
+                width: 100%;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .section {
+                padding: 4rem 0;
+            }
+            
+            .code-breakdown {
+                padding: 1.5rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+        
+        /* SVG animations */
+        .hexagonal-grid path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: dash 3s ease-in-out forwards;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        /* 3D Hex Animation */
+        .hex-3d-container {
+            width: 300px;
+            height: 300px;
+            perspective: 1200px;
+            position: relative;
+        }
+        
+        .hex-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate 15s infinite linear;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotateX(0) rotateY(0);
+            }
+            to {
+                transform: rotateX(360deg) rotateY(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 0L29.856 8V24L16 32L2.144 24V8L16 0Z" fill="#0B1E36" stroke="#7FFFD4" stroke-width="1"/>
+                    <path d="M16 6L24.392 10.5V19.5L16 24L7.608 19.5V10.5L16 6Z" stroke="#FF6F3C" stroke-width="1"/>
+                </svg>
+                SIREN
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#applications">Applications</a></li>
+                    <li><a href="#visual-codes">Visual Codes</a></li>
+                    <li><a href="#docs">Docs</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" >
+        <div class="hex-background">
+            <!--
+            <div class="hex" style="left: 10%; top: 80%; animation-delay: 0s;"></div>
+            <div class="hex" style="left: 20%; top: 90%; animation-delay: 5s;"></div>
+            <div class="hex" style="left: 30%; top: 85%; animation-delay: 10s;"></div>
+            <div class="hex" style="left: 50%; top: 95%; animation-delay: 3s;"></div>
+            <div class="hex" style="left: 70%; top: 80%; animation-delay: 8s;"></div>
+            <div class="hex" style="left: 85%; top: 90%; animation-delay: 12s;"></div>
+            -->
+        </div>
+        <div class="container" style="height: 96vh;align-items: center; display: flex;">
+            <div class="hero-content" style="height: 96%;">
+                <div class="hero-text" style="height: 100%; align-content: center;">
+                    <h1>
+                        SIREN — A <span>Semantic Identity</span> System for Space and Time
+                    </h1>
+                    <h3>
+                        SIREN (<span>S</span>patial <span>I</span>ndex of <span>R</span>eferenced <span>E</span>ntities and <span>N</span>ames)
+                    </h3>
+                    <p>empowers you to encode space, structure, and time into symbolic, human-readable codes. A revolutionary approach to spatial indexing for next-generation applications.</p>
+                    <div class="cta-buttons">
+                        <a href="#" class="btn btn-primary">Try Demo</a>
+                        <a href="#" class="btn btn-secondary">Read the Docs</a>
+                        <br>
+                        <a href="#" class="btn btn-secondary">FAQ for Enterprise</a>
+                    </div>
+                </div>
+                <div class="hero-visual" style="display: flex; justify-content: center; position: relative; height: 64%;">
+                    <div class="hex-3d-container">
+                        <!--
+                        <div class="hex-3d">
+                            <svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="hexagonal-grid">
+                                <path d="M150 50L237.5 100V200L150 250L62.5 200V100L150 50Z" stroke="#7FFFD4" stroke-width="2"/>
+                                <path d="M150 100L193.75 125V175L150 200L106.25 175V125L150 100Z" stroke="#FF6F3C" stroke-width="2"/>
+                                <path d="M150 75L215.625 112.5V187.5L150 225L84.375 187.5V112.5L150 75Z" stroke="#A2D2FF" stroke-width="1"/>
+                                <path d="M150 25L259.375 87.5V212.5L150 275L40.625 212.5V87.5L150 25Z" stroke="#F4C74F" stroke-width="1" stroke-opacity="0.5"/>
+                            </svg>
+                        </div>
+                        -->
+                    </div>
+                    <div class="code-sample">
+                        <div class="code-line">
+                            <span class="code-label">Code:</span>
+                            <span class="code-value">
+                                <span class="tile-name">SILVERON::COVE::DAWNRISE::FLUX:: XENOLITH::NORM::ZEALWISE::BURJ</span> | 
+                                <span class="offset">+3 -2 +0</span> 
+                                <span class="timestamp">@2025-05-05T00:00Z</span> 
+                                <span class="vector">#Line</span> !
+                            </span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Location:</span>
+                            <span class="code-value">Granada Coast, Spain</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Tile Resolution:</span>
+                            <span class="code-value">10m</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Code Accuracy:</span>
+                            <span class="code-value">± &lt; 1m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+    </section>
+
+
+    
+
+    <!-- What is SIREN Section -->
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">What is SIREN?</h2>
+            <p class="section-subtitle">A revolutionary spatial indexing system that encodes geographic and abstract locations into a concise, semantically meaningful format.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3h18v18H3z"/>
+                            <path d="M12 8v8M8 12h8"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Recursive Tiling</h3>
+                    <p class="feature-description">SIREN subdivides Earth through recursive grid patterns, alternating between 8×8 and 4×4 subdivisions for efficient spatial indexing at multiple scales.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Semantic Naming</h3>
+                    <p class="feature-description">Unlike traditional coordinates, SIREN uses structured vocabulary to create location identifiers that are both human-readable and machine-processable.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Vector & Time Encoding</h3>
+                    <p class="feature-description">SIREN integrates temporal indexing and vector shapes into its format, allowing for the representation of dynamic regions and time-bound spatial entities.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Hex Symbol Codes</h3>
+                    <p class="feature-description">Each SIREN code can be paired with a compact hexagonal visual representation, ideal for scannable markers, augmented reality, and visual documentation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!--
+    <section class="comparison-section container" style="margin-top: 6rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 4rem;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">How SIREN Compares</h2>
+        <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+            SIREN introduces a semantically enriched, symbolically encoded spatial index—bridging linguistic intuition with structured spatial referencing.
+        </p>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                <thead>
+                    <tr style="background-color: var(--transparent-blue); text-align: left;">
+                        <th style="padding: 1rem; border-bottom: 1px solid var(--slate-gray);">Feature</th>
+                        <th style="padding: 1rem; border-bottom: 1px solid var(--slate-gray); background-color: var(--warm-amber); color: var(--philippine-night);">SIREN</th>
+                        <th style="padding: 1rem; border-bottom: 1px solid var(--slate-gray);">what3words</th>
+                        <th style="padding: 1rem; border-bottom: 1px solid var(--slate-gray);">H3 (Uber)</th>
+                        <th style="padding: 1rem; border-bottom: 1px solid var(--slate-gray);">Google Plus Codes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 1rem;">Human-readable Codes</td>
+                        <td style="padding: 1rem;background-color: var(--warm-amber); color: var(--philippine-night);">✓ String of words, based on necessary resolution</td>
+                        <td style="padding: 1rem;">✓ 3-word addresses</td>
+                        <td style="padding: 1rem;">𐄂 Hexadecimal grid identifiers</td>
+                        <td style="padding: 1rem;">𐄂 Alphanumeric strings</td>
+                    </tr>
+                    
+                    <tr>
+                        <td style="padding: 1rem;">Cultural Neutrality</td>
+                        <td style="padding: 1rem;background-color: var(--warm-amber); color: var(--philippine-night);">✓ Controlled finite vocabulary</td>
+                        <td style="padding: 1rem;">𐄂 Biased by language sets</td>
+                        <td style="padding: 1rem;">✓ Symbolic and data-centric</td>
+                        <td style="padding: 1rem;">✓ Language-agnostic</td>
+                    </tr>
+                    <tr style="background-color: rgba(255, 255, 255, 0.05);">
+                        <td style="padding: 1rem;">Semantic Layering</td>
+                        <td style="padding: 1rem;background-color: var(--warm-amber); color: var(--philippine-night);">✓ Compositional name layers</td>
+                        <td style="padding: 1rem;">𐄂 Flat three-word reference</td>
+                        <td style="padding: 1rem;">𐄂 None</td>
+                        <td style="padding: 1rem;">𐄂 None</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Content</td>
+                        <td style="padding: 1rem;background-color: var(--warm-amber); color: var(--philippine-night);">✓ Coordinates, vector and fractal shapes, <br> timestamp, time series, mathematical models</td>
+                        <td style="padding: 1rem;">𐄂 Small geopolygon</td>
+                        <td style="padding: 1rem;">𐄂 Hexagonal/Pentagonal Grids</td>
+                        <td style="padding: 1rem;">𐄂 Point on Earth</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Designed for AI Integration</td>
+                        <td style="padding: 1rem;background-color: var(--warm-amber); color: var(--philippine-night);">✓ Fully symbolic and referenceable</td>
+                        <td style="padding: 1rem;">𐄂 Natural language only</td>
+                        <td style="padding: 1rem;">✓ Compatible with spatial algorithms</td>
+                        <td style="padding: 1rem;">𐄂 No semantic structure</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+-->
+
+
+    <section class="comparison-section container" style="margin-top: 6rem; padding: 2rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 1rem; margin: 0 2rem;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">SIREN vs. Google Plus Codes</h2>
+        <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+            A deep dive into the systemic, computational, and architectural differences between SIREN and Plus Codes (OLC).
+        </p>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                <thead>
+                    <tr style="background-color: var(--transparent-blue); text-align: left;">
+                        <th style="padding: 1rem;">Aspect</th>
+                        <th style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">SIREN</th>
+                        <th style="padding: 1rem;">Google Plus Codes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 1rem;">Code Structure</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Semantically layered, symbolic names + vector/time metadata</td>
+                        <td style="padding: 1rem;">Alphanumeric grid codes derived from lat/long</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Shortened Code Uniqueness</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Globally unique without needing place names</td>
+                        <td style="padding: 1rem;">Require locality info to disambiguate</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Data Dependency</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Self-contained, not reliant on external locality datasets</td>
+                        <td style="padding: 1rem;">Sensitive to changes in locality/place name datasets</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Point-level Precision</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Supports sub-meter precision with offsets</td>
+                        <td style="padding: 1rem;">Area-based; doesn't uniquely identify units inside buildings</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Grid System Alignment</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Adaptable tiling; semantically anchored tiles</td>
+                        <td style="padding: 1rem;">Fixed WGS84 grid; may misalign with property or administrative lines</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Computation & Proximity</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Direct proximity analysis from encoded structure</td>
+                        <td style="padding: 1rem;">Requires full decoding for spatial comparison</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">AI Integration</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Symbolic and vector-compatible, ideal for AI parsing</td>
+                        <td style="padding: 1rem;">Limited semantic meaning; not structured for symbolic AI</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Infrastructure Dependency</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Open and portable with no central dependency</td>
+                        <td style="padding: 1rem;">Effectively tied to Google Maps for usability</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="comparison-section container" style="margin-top: 6rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 1.8rem;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">SIREN vs. what3words</h2>
+        <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+            A detailed technical comparison of SIREN and what3words reveals key design strengths and limitations in symbolic geocoding systems.
+        </p>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                <thead>
+                    <tr style="background-color: var(--transparent-blue); text-align: left;">
+                        <th style="padding: 1rem;">Aspect</th>
+                        <th style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">SIREN</th>
+                        <th style="padding: 1rem;">what3words</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 1rem;">Transparency & Openness</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Open semantics and structure; vendor-independent</td>
+                        <td style="padding: 1rem;">Proprietary and closed-source; vendor lock-in</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Address Confusion Resistance</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Created with semantic anchoring, optional checks</td>
+                        <td style="padding: 1rem;">Confusable nearby addresses; no inherent error correction</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Error Correction Capabilities</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Optional metadata and vector correction fields</td>
+                        <td style="padding: 1rem;">No checksums or intrinsic error detection</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Word Semantics</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Layered and semantic word composition</td>
+                        <td style="padding: 1rem;">Words are arbitrary and semantically empty</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Spatial Resolution</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Multiscale: from region to sub-meter with offset</td>
+                        <td style="padding: 1rem;">Fixed 3×3 meter grid; no hierarchy or scale</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Offline/Independent Use</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Fully self-contained and interpretable</td>
+                        <td style="padding: 1rem;">API-dependent for suggestions and validation</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Vector & Time Support</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Includes vector shapes and temporal data</td>
+                        <td style="padding: 1rem;">Lacks built-in vector or temporal encoding</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Legal and Ecosystem Flexibility</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">No legal restriction on independent implementations</td>
+                        <td style="padding: 1rem;">Legal threats to open implementations; no ecosystem freedom</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+    
+
+    <!-- Code Structure Section -->
+    <section class="code-structure" id="how-it-works" style="background: #0b1e13;  padding: 2rem; margin-top: 2rem;">
+        <div class="container">
+            <h2 class="section-title">Code Structure</h2>
+            <p class="section-subtitle">SIREN's powerful format combines location, time, and shape information in a single, versatile reference.</p>
+            
+            <div class="code-breakdown">
+                <div class="code-example">
+                    <span class="tile-name">SILVERON::COVE</span> | 
+                    <span class="offset">+3 -2 +0</span> 
+                    <span class="timestamp">@2025-05-05T00:00Z</span> 
+                    <span class="vector">#Line</span> !{Future use}
+                </div>
+                
+                <div class="code-components">
+                    <div class="component">
+                        <div class="component-name">Tile Name</div>  
+                        <div class="component-value tile-name">SILVERON::COVE</div>
+                        <div class="component-desc">Semantic identifier for the spatial tile, drawn from a structured vocabulary.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">XYZ Offset</div>  
+                        <div class="component-value offset">+3 -2 +0</div>
+                        <div class="component-desc">Positional offsets in meters from the tile center (X=east-west, Y=north-south, Z=vertical).</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Timestamp</div>  
+                        <div class="component-value timestamp">@2025-05-05T00:00Z</div>
+                        <div class="component-desc">ISO 8601 timestamp for capturing temporal data or for time-sensitive locations.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Vector</div>  
+                        <div class="component-value vector">#Line</div>
+                        <div class="component-desc">Vector shape or geometric region associated with the location.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Reserved</div>  
+                        <div class="component-value"> !{Future use}</div>
+                        <div class="component-desc">Reserved for future mathematical expressions or metadata tags.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section class="use-cases section" id="applications">
+        <div class="container">
+            <h2 class="section-title">Use Cases</h2>
+            <p class="section-subtitle">SIREN's versatile format enables a wide range of applications across different domains.</p>
+            
+            <div class="use-cases-grid">
+                <div class="use-case-card">
+                    <div class="use-case-icon">🔍</div>
+                    <h3 class="use-case-title">Geospatial Analysis</h3>
+                    <p class="use-case-description">Analyze environmental data, track migrations, or monitor geological changes with precise, time-aware spatial references.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">🌐</div>
+                    <h3 class="use-case-title">Decentralized Spatial Registries</h3>
+                    <p class="use-case-description">Create immutable records of locations, boundaries, and spatial assets in distributed ledger systems.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">📡</div>
+                    <h3 class="use-case-title">Sensor Networks & IoT</h3>
+                    <p class="use-case-description">Deploy and manage distributed sensor networks with meaningful, hierarchical location identifiers.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">🌍</div>
+                    <h3 class="use-case-title">Cultural & Historical Marking</h3>
+                    <p class="use-case-description">Document cultural landmarks, historical events, and points of interest with rich spatial context.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">✨</div>
+                    <h3 class="use-case-title">AR/XR Spatial Anchoring</h3>
+                    <p class="use-case-description">Create persistent augmented reality experiences with stable, human-readable spatial references.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visual Representation Section -->
+    <section class="visual-rep" id="visual-codes">
+        <div class="container visual-content">
+            <h2 class="section-title">From Code to Symbol</h2>
+            <p class="section-subtitle">The aesthetics of space expressed through hexagonal symbolism — scannable, styleable, and information-rich.</p>
+            
+            <div class="hex-examples">
+                <div class="hex-example">
+                    <div class="hex-visual">
+                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M70 10L122.5 40V100L70 130L17.5 100V40L70 10Z" stroke="#7FFFD4" stroke-width="2"/>
+                            <path d="M70 40L96.25 55V85L70 100L43.75 85V55L70 40Z" stroke="#FF6F3C" stroke-width="2"/>
+                            <circle cx="70" cy="70" r="5" fill="#F4C74F"/>
+                        </svg>
+                    </div>
+                    <h3 class="hex-title">Standard Point</h3>
+                    <p class="hex-desc">Basic reference point with precision indicators</p>
+                </div>
+                
+                <div class="hex-example">
+                    <div class="hex-visual">
+                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M70 10L122.5 40V100L70 130L17.5 100V40L70 10Z" stroke="#7FFFD4" stroke-width="2"/>
+                            <path d="M70 40L96.25 55V85L70 100L43.75 85V55L70 40Z" stroke="#FF6F3C" stroke-width="2"/>
+                            <path d="M35 70H105" stroke="#F4C74F" stroke-width="3"/>
+                            <circle cx="35" cy="70" r="3" fill="#F4C74F"/>
+                            <circle cx="105" cy="70" r="3" fill="#F4C74F"/>
+                        </svg>
+                    </div>
+                    <h3 class="hex-title">Linear Vector</h3>
+                    <p class="hex-desc">Directional reference with embedded vector data</p>
+                </div>
+                
+                <div class="hex-example">
+                    <div class="hex-visual">
+                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M70 10L122.5 40V100L70 130L17.5 100V40L70 10Z" stroke="#7FFFD4" stroke-width="2"/>
+                            <path d="M70 40L96.25 55V85L70 100L43.75 85V55L70 40Z" stroke="#FF6F3C" stroke-width="2"/>
+                            <path d="M70 40V100" stroke="#A2D2FF" stroke-width="3"/>
+                            <text x="80" y="70" fill="#F4C74F" font-family="monospace" font-size="12">T</text>
+                        </svg>
+                    </div>
+                    <h3 class="hex-title">Temporal Mark</h3>
+                    <p class="hex-desc">Time-indexed location with historical context</p>
+                </div>
+                
+                <div class="hex-example">
+                    <div class="hex-visual">
+                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M70 10L122.5 40V100L70 130L17.5 100V40L70 10Z" stroke="#7FFFD4" stroke-width="2"/>
+                            <path d="M70 40L96.25 55V85L70 100L43.75 85V55L70 40Z" stroke="#FF6F3C" stroke-width="2"/>
+                            <path d="M45 45L95 95M45 95L95 45" stroke="#A2D2FF" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3 class="hex-title">Abstract Entity</h3>
+                    <p class="hex-desc">Logical or conceptual space reference</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Docs Section -->
+    <section class="docs section" id="docs">
+        <div class="container">
+            <h2 class="section-title">Documentation & Resources</h2>
+            <p class="section-subtitle">Everything you need to start implementing SIREN in your applications.</p>
+            
+            <div class="docs-links">
+
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">🌏</div>
+                    <h3 class="docs-link-title">The Math</h3>
+                    <p class="docs-link-desc">Learn how the codes are generated, the Vocabulary sets, and the mathematical justification behind the process.</p>
+                </a>
+
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">💻</div>
+                    <h3 class="docs-link-title">Code Examples</h3>
+                    <p class="docs-link-desc">Sample implementations and tutorials for common use cases.</p>
+                </a>
+
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">📚</div>
+                    <h3 class="docs-link-title">API Documentation</h3>
+                    <p class="docs-link-desc">Complete reference for the SIREN API, including endpoints, parameters, and response formats.</p>
+                </a>
+                
+                
+                
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">🔗</div>
+                    <h3 class="docs-link-title">Link with other projects</h3>
+                    <p class="docs-link-desc">Here you can find limited support on third party projects.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="footer-logo">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 0L29.856 8V24L16 32L2.144 24V8L16 0Z" fill="#0B1E36" stroke="#7FFFD4" stroke-width="1"/>
+                            <path d="M16 6L24.392 10.5V19.5L16 24L7.608 19.5V10.5L16 6Z" stroke="#FF6F3C" stroke-width="1"/>
+                        </svg>
+                        SIREN
+                    </a>
+                    <p class="footer-about">A revolutionary spatial indexing system that encodes geographic and abstract locations into a unified format for the future of spatial intelligence.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.5 4.865 20.306 8.84 21.5C9.34 21.58 9.52 21.27 9.52 21C9.52 20.77 9.515 20.14 9.51 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.67 21.59 15.19 21.5C19.14 20.3 22 16.5 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.46 6C21.69 6.35 20.86 6.58 20 6.69C20.88 6.16 21.56 5.32 21.88 4.31C21.05 4.81 20.13 5.16 19.16 5.36C18.37 4.5 17.26 4 16 4C13.65 4 11.73 5.92 11.73 8.29C11.73 8.63 11.77 8.96 11.84 9.27C8.28 9.09 5.11 7.38 3 4.79C2.63 5.42 2.42 6.16 2.42 6.94C2.42 8.43 3.17 9.75 4.33 10.5C3.62 10.5 2.96 10.3 2.38 10V10.03C2.38 12.11 3.86 13.85 5.82 14.24C5.46 14.34 5.08 14.39 4.69 14.39C4.42 14.39 4.15 14.36 3.89 14.31C4.43 16 6 17.26 7.89 17.29C6.43 18.45 4.58 19.13 2.56 19.13C2.22 19.13 1.88 19.11 1.54 19.07C3.44 20.29 5.7 21 8.12 21C16 21 20.33 14.46 20.33 8.79C20.33 8.6 20.33 8.42 20.32 8.23C21.16 7.63 21.88 6.87 22.46 6Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM8.5 18.5H5.5V8.5H8.5V18.5ZM7 7.5C6.17 7.5 5.5 6.83 5.5 6C5.5 5.17 6.17 4.5 7 4.5C7.83 4.5 8.5 5.17 8.5 6C8.5 6.83 7.83 7.5 7 7.5ZM18.5 18.5H15.5V13.9C15.5 12.7 14.5 11.8 13.3 11.8C12.1 11.8 11.1 12.7 11.1 13.9V18.5H8.5V8.5H11.1V9.8C11.6 9.3 12.5 8.5 13.3 8.5C16.1 8.5 18.5 10.9 18.5 13.7V18.5Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Explore</h3>
+                    <ul>
+                        <li><a href="#about">About SIREN</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#applications">Applications</a></li>
+                        <li><a href="#visual-codes">Visual Codes</a></li>
+                        <li><a href="#docs">Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Getting Started</a></li>
+                        <li><a href="#">Technical Papers</a></li>
+                        <li><a href="#">Case Studies</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><a href="#">info@siren-system.com</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Press Inquiries</a></li>
+                        <li><a href="#">Partnerships</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="copyright">
+                    © 2025 <span>Vernal Systems</span> / SIREN. All rights reserved.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">License</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add scroll animation for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
+            } else {
+                header.style.boxShadow = 'none';
+            }
+        });
+        
+        // Create random hexagons
+        function createHexagons() {
+            const hexBackground = document.querySelector('.hex-background');
+            for (let i = 0; i < 6; i++) {
+                const hex = document.createElement('div');
+                hex.classList.add('hex');
+                const size = Math.random() * 40 + 20;
+                hex.style.width = `${size}px`;
+                hex.style.height = `${size}px`;
+                hex.style.left = `${Math.random() * 100}%`;
+                hex.style.top = `${Math.random() * 100 + 75}%`;
+                hex.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                hex.style.animationDelay = `${Math.random() * 10}s`;
+                hexBackground.appendChild(hex);
+            }
+        }
+        
+        //createHexagons();
+    </script>
+</body>
+</html>

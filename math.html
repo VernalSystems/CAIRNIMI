@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAIRNIMI — Spatial Index of Referenced Entities and Names</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   
+    <style>
+        :root {
+            --deep-space-blue:   #0B1E36;
+            --tropical-green:    #022219;;
+            --terra-orange:      #FF6F3C;
+            --data-mint:         #7FFFD4;
+            --bone-white:        #EAEAEA;
+            --slate-gray:        #B4C6C0;
+            --warm-amber:        #F4C74F;
+            --silver-blue:       #A2D2FF;
+            --philippine-night:  #104b2a;
+            --transparent-blue:  rgba(11, 48, 54, 0.8);
+            --monsoon-verde:     #55f79e;
+            --highlight-yellow:  #f9cb40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--deep-space-blue);
+            color: var(--bone-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--transparent-blue);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(234, 234, 234, 0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+        }
+        
+        .logo svg {
+            margin-right: 0.5rem;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: var(--bone-white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--terra-orange);
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover:after {
+            width: 100%;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 80px;
+            overflow: hidden;
+        }
+        
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:  rgba(0, 29, 19, 0.84);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4rem;
+        }
+        
+        .hero-text {
+            flex: 1;
+        }
+        
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .hero-text h1 span {
+            color: var(--terra-orange);
+        }
+        .hero-text h3 span {
+            color: var(--terra-orange);
+        }
+        
+        .hero-text p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--terra-orange);
+            color: var(--deep-space-blue);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF8C5A;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 111, 60, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--bone-white);
+            border: 2px solid var(--bone-white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(234, 234, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .code-sample {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(0);
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .code-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .code-label {
+            color: var(--slate-gray);
+            width: 100px;
+            flex-shrink: 0;
+        }
+        
+        .code-value {
+            color: var(--bone-white);
+        }
+        
+        .tile-name {
+            color: var(--data-mint);
+        }
+        
+        .offset {
+            color: var(--terra-orange);
+        }
+        
+        .timestamp {
+            color: var(--warm-amber);
+        }
+        
+        .vector {
+            color: var(--silver-blue);
+        }
+        
+        /* Section: What is CAIRNIMI */
+        .section {
+            padding: 8rem 0;
+        }
+        
+        .why-cairnimi {
+            margin-top: 2rem; 
+            margin-bottom: 2rem; 
+            padding: 2rem; 
+            padding-bottom: 4rem; 
+            background-color: var(--tropical-green); 
+            
+        }
+
+        .why-cairnimi .problem-container {
+            width: 45%;
+            margin-top: 2rem;
+            border-radius: 0.45rem;
+        }
+        
+        .why-cairnimi .problem {
+            color: var(--terra-orange);
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.75rem;
+            padding: 1.25rem;
+            background-color: rgba(0, 17, 17, 0.84);
+            border: var(--silver-blue) 1px solid;
+            border-radius: 0.45rem;
+            height: 100%;
+
+        }
+
+    
+
+        .why-cairnimi .problem .expl {
+            color: var(--slate-gray);
+            font-size: 1.0rem;
+            font-weight: unset;
+            margin-top: 2rem;
+            line-height: 1.4rem;
+
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .section-subtitle {
+            font-size: 1.25rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.5), rgba(11, 30, 54, 0.8));
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(127, 255, 212, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--philippine-night);
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        /* Code Structure Section */
+        .code-structure {
+            background: radial-gradient(circle at center, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-structure:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('/api/placeholder/1600/900');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        .code-breakdown {
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 24px;
+            padding: 3rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(127, 255, 212, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            
+            margin: 0 auto;
+        }
+        
+        .code-example {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: rgba(11, 30, 54, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+            position: relative;
+        }
+        
+        .code-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .component {
+            background-color: rgba(47, 62, 70, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .component:hover {
+            background-color: rgba(47, 62, 70, 0.5);
+            border-color: var(--data-mint);
+            transform: translateY(-5px);
+        }
+        
+        .component-name {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--data-mint);
+            margin-bottom: 0.75rem;
+        }
+        
+        .component-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .component-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            padding: 8rem 0;
+        }
+        
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .use-case-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .use-case-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .use-case-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .use-case-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--bone-white);
+        }
+        
+        .use-case-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 1rem;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        .use-case-link {
+            margin-top: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            color: var(--terra-orange);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .use-case-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Visual Rep Section */
+        .visual-rep {
+            background: linear-gradient(180deg, var(--deep-space-blue), rgba(11, 20, 34, 1));
+            padding: 8rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .visual-rep:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(244, 199, 79, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(127, 255, 212, 0.1) 0%, transparent 30%);
+            z-index: 0;
+        }
+        
+        .visual-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hex-examples {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 4rem 0;
+        }
+        
+        .hex-example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 220px;
+        }
+        
+        .hex-visual {
+            width: 180px;
+            height: 180px;
+            background-color: rgba(47, 62, 70, 0.5);
+            border: 1px solid var(--data-mint);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hex-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .hex-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+            text-align: center;
+        }
+        
+        /* Docs Section */
+        .docs {
+            padding: 8rem 0;
+        }
+        
+        .docs-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        
+        .docs-link {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.2), rgba(11, 30, 54, 0.4));
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--bone-white);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .docs-link:hover {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            transform: translateY(-5px);
+            border-color: rgba(127, 255, 212, 0.5);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .docs-link-icon {
+            font-size: 1.5em;
+            margin-bottom: 1rem;
+            color: var(--data-mint);
+        }
+        
+        .docs-link-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .docs-link-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(11, 20, 34, 1);
+            padding: 5rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        footer:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--data-mint), transparent);
+            opacity: 0.3;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+        
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-about {
+            font-size: 0.95rem;
+            color: rgba(234, 234, 234, 0.7);
+            margin-bottom: 1.5rem;
+            max-width: 300px;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(47, 62, 70, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bone-white);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: var(--terra-orange);
+            transform: translateY(-3px);
+        }
+        
+        .footer-links h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--bone-white);
+        }
+        
+        .footer-links ul {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(234, 234, 234, 0.7);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--terra-orange);
+        }
+        
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(47, 62, 70, 0.5);
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.6);
+        }
+        
+        .copyright span {
+            color: var(--data-mint);
+        }
+        
+        .footer-legal {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-legal a {
+            color: rgba(234, 234, 234, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-legal a:hover {
+            color: var(--terra-orange);
+        }
+        
+        /* Animated background hexagons */
+        .hex-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background-image: url('Y.jpg') ;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /* background-color: var(--tropical-green); */
+        }
+        
+        .hex {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(127, 255, 212, 0.05);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: float-hex 20s infinite linear;
+        }
+        
+        @keyframes float-hex {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .hero-content {
+                flex-direction: column;
+                gap: 4rem;
+            }
+            
+            .hero-text {
+                text-align: center;
+            }
+            
+            .hero-text p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .cta-buttons {
+                justify-content: center;
+            }
+            
+            .hero-visual {
+                width: 100%;
+            }
+            
+            .code-sample {
+                position: relative;
+                bottom: auto;
+                width: 100%;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .section {
+                padding: 4rem 0;
+            }
+            
+            .code-breakdown {
+                padding: 1.5rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+        
+        /* SVG animations */
+        .hexagonal-grid path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: dash 3s ease-in-out forwards;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        /* 3D Hex Animation */
+        .hex-3d-container {
+            width: 300px;
+            height: 300px;
+            perspective: 1200px;
+            position: relative;
+        }
+        
+        .hex-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate 15s infinite linear;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotateX(0) rotateY(0);
+            }
+            to {
+                transform: rotateX(360deg) rotateY(360deg);
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .tab-container {
+    margin: 6rem 2rem;
+    padding: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+    max-width: unset;
+  }
+
+  .tab-buttons {
+    display: flex;
+    background-color: var(--philippine-night);
+    border-radius: 1rem 1rem 0 0;
+    overflow: hidden;
+  }
+
+  .tab-buttons button {
+    flex: 1;
+    padding: 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--philippine-night);
+    border: none;
+    outline: none;
+    color: var(--bone-white);
+    transition: background 0.3s;
+  }
+
+  .tab-buttons button.active {
+    background-color: var(--warm-amber);
+    color: var(--philippine-night);
+    font-weight: bold;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 2rem;
+    padding-bottom: 4rem;
+    background-color: var(--philippine-night);
+    color: var(--bone-white);
+    border-radius: 0 0 1rem 1rem;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .tab-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--warm-amber);
+    text-align: center;
+  }
+
+  .tab-content p {
+    color: rgba(234, 234, 234, 0.8);
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .tab-content table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--bone-white);
+    font-size: 1rem;
+    overflow-x: auto;
+  }
+
+  .tab-content th, .tab-content td {
+    padding: 1rem;
+    text-align: left;
+  }
+
+  .tab-content thead tr {
+    background-color: var(--transparent-blue);
+  }
+
+  .tab-content th:nth-child(2),
+  .tab-content td:nth-child(2) {
+    background-color: var(--warm-amber);
+    color: var(--philippine-night);
+  }
+
+
+
+
+
+
+
+
+  .tab-container-prps {
+      display: flex;
+      height: 100vh;
+      border: 1px solid var(--highlight-yellow);
+      border-radius: 0.45rem;
+      padding: 2rem;
+      background: var(--tropical-green);
+    }
+
+    .tab-list-prps {
+      min-width: 220px;
+      background-color: #121528;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .tab-button-prps {
+      background: none;
+      border: none;
+      color: white;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      text-align: left;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .tab-button-prps .active {
+      background-color: var(--terra-orange);
+      color: var(--deep-space-blue);
+      font-weight: bold;
+    }
+
+    .tab-content-prps {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    
+
+    .content-wrapper-prps {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .grid-prps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .card-prps {
+      background-color: var(--transparent-blue);
+      padding: 2rem;
+      border-radius: 1.5rem;
+    }
+
+    .cta-prps {
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .cta-prps a {
+      padding: 1rem 2rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+
+    .hidden-prps {
+      display: none;
+    }
+
+
+
+
+
+    code {
+      background-color: #111;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      color: var(--highlight-yellow);
+    }
+
+    pre {
+      background-color: #111;
+      padding: 1rem;
+      border-radius: 1rem;
+      overflow-x: auto;
+      color: var(--highlight-yellow);
+    }
+
+    .formula {
+      background: var(--transparent-blue);
+      padding: 1rem;
+      border-left: 4px solid var(--warm-amber);
+      margin: 1rem 0;
+      font-family: monospace;
+    }
+
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                
+
+                <svg
+                width="15mm"
+                height="15mm"
+                viewBox="0 0 238.11064 230.55114"
+                version="1.1"
+                id="svg1"
+                xml:space="preserve"
+                inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+                sodipodi:docname="logo_2.svg"
+                inkscape:export-filename="BG.png"
+                inkscape:export-xdpi="96"
+                inkscape:export-ydpi="96"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                  id="namedview1"
+                  pagecolor="#ffffff"
+                  bordercolor="#000000"
+                  borderopacity="0.25"
+                  inkscape:showpageshadow="2"
+                  inkscape:pageopacity="0.0"
+                  inkscape:pagecheckerboard="0"
+                  inkscape:deskcolor="#d1d1d1"
+                  inkscape:document-units="mm"
+                  showgrid="true"
+                  inkscape:zoom="5.5267742"
+                  inkscape:cx="19.450768"
+                  inkscape:cy="4.9757777"
+                  inkscape:window-width="1176"
+                  inkscape:window-height="1052"
+                  inkscape:window-x="743"
+                  inkscape:window-y="0"
+                  inkscape:window-maximized="0"
+                  inkscape:current-layer="layer1"><inkscape:grid
+                    id="grid1"
+                    units="mm"
+                    originx="0"
+                    originy="0"
+                    spacingx="1.0000005"
+                    spacingy="1"
+                    empcolor="#0099e5"
+                    empopacity="0.30196078"
+                    color="#0099e5"
+                    opacity="0.14901961"
+                    empspacing="5"
+                    enabled="true"
+                    visible="true" /></sodipodi:namedview><defs
+                  id="defs1" /><g
+                  inkscape:label="Ebene 1"
+                  inkscape:groupmode="layer"
+                  id="layer1"><path
+                    id="path3"
+                    style="fill:none;fill-opacity:0.996078;stroke:#d71d03;stroke-width:6.04725;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                    d="m 195.30308,-207.30373 -38.65801,68.03489 H 79.329035 l -38.658013,-68.03489 38.658013,-68.0349"
+                    sodipodi:nodetypes="ccccc" /><g
+                    id="g1"
+                    transform="matrix(-0.15841219,-0.96083331,0.99876702,-0.15239561,13.059161,240.19782)"><path
+                      id="path1"
+                      style="fill:none;fill-opacity:0.996078;stroke:#03d8bd;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="m 140.53653,85.994416 19.46355,34.160494 -19.46355,34.16048 h -38.92709"
+                      sodipodi:nodetypes="cccc" /><path
+                      id="path4"
+                      style="fill:none;fill-opacity:0.996078;stroke:#25d103;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="m 209.37556,118.82202 -38.75093,64.63311 M 54.371827,118.82202 93.122764,54.188918 h 77.501866 l 38.75093,64.633102"
+                      sodipodi:nodetypes="cccccc" /><path
+                      id="path5"
+                      style="fill:none;fill-opacity:0.996078;stroke:#eba603;stroke-width:8.91908;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="M 178.66897,213.7324 H 68.7981 L 13.86267,117.53628 68.7981,21.340137"
+                      sodipodi:nodetypes="cccc" /></g></g></svg>
+             
+
+                CAIRNIMI
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html#about">About</a></li>
+                    <li><a href="index.html#how-it-works">How It Works</a></li>
+                    <li><a href="index.html#applications">Applications</a></li>
+                    <li><a href="index.html#visual-codes">Visual Codes</a></li>
+                    <li><a href="index.html#docs">Docs</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    
+      <section style="position: relative; padding: 4rem; padding-top: 120px;">
+        <h2>Recursive Tiling of the Earth</h2>
+        <p>
+          Cairnimi uses a recursive tiling model to subdivide the Earth. 
+          In every odd step (strating at step 1, the entire earth is a single tile, from +-85 degree latitude, -180 to +180 degree longitude), 
+          a tile is subdivided in 8×8 = 64 tiles. These smaller tiles are given indices 0-7 row-wise, and 0-7 columnwise.
+          The tile at index col 6 and row 3 is the start tile, named ARANDALE. From there tiles are calculated in a CCW spiral 
+          for the first step, CW for the 3rd step, CCW again for 5th etc.
+        </p>
+        <p>
+          In every even step, the tile is split into 4×4 = 16 tiles. These smaller tiles are again given unique names. 
+          Step two starts at Lower Right, Step four in Upper Left, etc.
+        </p>
+        <div class="formula">
+          <img src="ee.png" alt="">
+        </div>
+        <p>
+          Locations are expressed as <code>::</code> Separated Strings. Such as: 
+          <code>SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::BURJ::CORALINE::COVE::YIELDING::AQUA::JADEPOOL::PYRE::ORBITALE::AQUA</code>.
+          With 16 levels, the location is identified at a resolution of ~ 5 µm × 5 µm or less.
+        </p>
+      </section>
+  
+      <section style="padding: 4rem;">
+        <h2>Tile Combinations</h2>
+        <p>
+          Sometimes, you may need to supply multiple tiles. For this, CAIRNIMI supports an array notation:
+        </p>
+        <pre>
+          [
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::BURJ
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::COVE 
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::FLUX
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::GAZE
+          ]
+        </pre>
+        <p>
+          One tile is supplied per line. Alternatively:
+        </p>
+        <pre>
+          [
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::BURJ
+              & N1 
+              & N1 W1
+              & W1
+              SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::JOVE
+          ]
+        </pre>
+        <p>
+          This starts with the first named tile. Then, the next neighboring tiles are given by the <code>&</code> symbol one per line.
+          <br>
+          <code>& N1</code> - Go one tile North form the named tile.
+          <br>
+          <code>& N1 W1</code> - Go one tile North form the named tile. Then, from the current tile, go one tile West. This way, any other tile in the same level can be addressed.
+          <br>
+          Further named tiles can be added as usual.
+        </p>
+      </section>
+  
+      <section style="padding: 4rem;">
+        <h2>Origin Change</h2>
+        <p>
+          Origin Change is handled by the <code>|</code> symbol. After a Cairnimi Code, we can add the origin change command as follows:
+        </p>
+  
+        <div class="formula">
+          SILVERON::COVE::DAWNRISE::FLUX::XENOLITH::NORM::ZEALWISE::JOVE | +1 -2.3478 +3.0
+        </div>
+        <p>
+          These tells us, our new origin is now measured from the center of the tile: 
+          1 meter to the North, 
+          2.3478 meter to the West, 
+          and 3.0 meter downward from the CAIRNIMI globe surface.
+          The CAIRNIMI globe is a perfect sphere of 6370000.0000 meter. 
+          <br><br>
+          All deviations is measured in meter, w.r.t. the CAIRNIMI globe surface.
+          The first item after <code>|</code> is the x-deviation, positive to North.
+          Second item is y-deviation, positive to East.
+          Final item is z-deviation, positive Downward.
+  
+        </p>
+      </section>
+  
+      <section style="padding: 4rem;">
+        <h2>Encoding Time & Events</h2>
+        <p>
+          Cairnimi tiles support time anchoring via ISO timestamps or relative tags:
+          <code>@ 2025-05-31T10:30Z</code>
+        </p>
+        <p>
+          Timestamps are supplied using the <code>@</code> symbol. All times are given in Zulu time.
+          To indicate a time span, we can write the span with a <code>+</code> symbol.
+        </p>
+        <div class="formula">
+          @ 2025-05-31T10:30Z + 01:26
+        </div>
+        <p>
+          This tells us, that the event has a time span of 1 hour, and 26 min (seconds are not given, so taken as 0).
+          It is also possible to provide references to other events, such as <code>@Sunset</code>, as long as these are defined. 
+          See Below.
+        </p>
+      </section>
+  
+      <section style="padding: 4rem;">
+        <h2>Vector</h2>
+        <p>
+          Coming soon
+        </p>
+        <div class="formula">
+          TILE # Vector Commands
+        </div>
+      </section>
+  
+     
+    
+      
+      
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="footer-logo">
+                        <svg
+                        width="15mm"
+                        height="15mm"
+                        viewBox="0 0 238.11064 230.55114"
+                        version="1.1"
+                        id="svg1"
+                        xml:space="preserve"
+                        inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+                        sodipodi:docname="logo_2.svg"
+                        inkscape:export-filename="BG.png"
+                        inkscape:export-xdpi="96"
+                        inkscape:export-ydpi="96"
+                        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                          id="namedview1"
+                          pagecolor="#ffffff"
+                          bordercolor="#000000"
+                          borderopacity="0.25"
+                          inkscape:showpageshadow="2"
+                          inkscape:pageopacity="0.0"
+                          inkscape:pagecheckerboard="0"
+                          inkscape:deskcolor="#d1d1d1"
+                          inkscape:document-units="mm"
+                          showgrid="true"
+                          inkscape:zoom="5.5267742"
+                          inkscape:cx="19.450768"
+                          inkscape:cy="4.9757777"
+                          inkscape:window-width="1176"
+                          inkscape:window-height="1052"
+                          inkscape:window-x="743"
+                          inkscape:window-y="0"
+                          inkscape:window-maximized="0"
+                          inkscape:current-layer="layer1"><inkscape:grid
+                            id="grid1"
+                            units="mm"
+                            originx="0"
+                            originy="0"
+                            spacingx="1.0000005"
+                            spacingy="1"
+                            empcolor="#0099e5"
+                            empopacity="0.30196078"
+                            color="#0099e5"
+                            opacity="0.14901961"
+                            empspacing="5"
+                            enabled="true"
+                            visible="true" /></sodipodi:namedview><defs
+                          id="defs1" /><g
+                          inkscape:label="Ebene 1"
+                          inkscape:groupmode="layer"
+                          id="layer1"><path
+                            id="path3"
+                            style="fill:none;fill-opacity:0.996078;stroke:#d71d03;stroke-width:6.04725;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                            d="m 195.30308,-207.30373 -38.65801,68.03489 H 79.329035 l -38.658013,-68.03489 38.658013,-68.0349"
+                            sodipodi:nodetypes="ccccc" /><g
+                            id="g1"
+                            transform="matrix(-0.15841219,-0.96083331,0.99876702,-0.15239561,13.059161,240.19782)"><path
+                              id="path1"
+                              style="fill:none;fill-opacity:0.996078;stroke:#03d8bd;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="m 140.53653,85.994416 19.46355,34.160494 -19.46355,34.16048 h -38.92709"
+                              sodipodi:nodetypes="cccc" /><path
+                              id="path4"
+                              style="fill:none;fill-opacity:0.996078;stroke:#25d103;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="m 209.37556,118.82202 -38.75093,64.63311 M 54.371827,118.82202 93.122764,54.188918 h 77.501866 l 38.75093,64.633102"
+                              sodipodi:nodetypes="cccccc" /><path
+                              id="path5"
+                              style="fill:none;fill-opacity:0.996078;stroke:#eba603;stroke-width:8.91908;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="M 178.66897,213.7324 H 68.7981 L 13.86267,117.53628 68.7981,21.340137"
+                              sodipodi:nodetypes="cccc" /></g></g></svg>
+                              &nbsp;&nbsp;&nbsp;&nbsp; CAIRNIMI
+                    </a>
+                    <p class="footer-about">A revolutionary spatial indexing system that encodes geographic and abstract locations into a unified format for the future of spatial intelligence.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.5 4.865 20.306 8.84 21.5C9.34 21.58 9.52 21.27 9.52 21C9.52 20.77 9.515 20.14 9.51 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.67 21.59 15.19 21.5C19.14 20.3 22 16.5 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.46 6C21.69 6.35 20.86 6.58 20 6.69C20.88 6.16 21.56 5.32 21.88 4.31C21.05 4.81 20.13 5.16 19.16 5.36C18.37 4.5 17.26 4 16 4C13.65 4 11.73 5.92 11.73 8.29C11.73 8.63 11.77 8.96 11.84 9.27C8.28 9.09 5.11 7.38 3 4.79C2.63 5.42 2.42 6.16 2.42 6.94C2.42 8.43 3.17 9.75 4.33 10.5C3.62 10.5 2.96 10.3 2.38 10V10.03C2.38 12.11 3.86 13.85 5.82 14.24C5.46 14.34 5.08 14.39 4.69 14.39C4.42 14.39 4.15 14.36 3.89 14.31C4.43 16 6 17.26 7.89 17.29C6.43 18.45 4.58 19.13 2.56 19.13C2.22 19.13 1.88 19.11 1.54 19.07C3.44 20.29 5.7 21 8.12 21C16 21 20.33 14.46 20.33 8.79C20.33 8.6 20.33 8.42 20.32 8.23C21.16 7.63 21.88 6.87 22.46 6Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM8.5 18.5H5.5V8.5H8.5V18.5ZM7 7.5C6.17 7.5 5.5 6.83 5.5 6C5.5 5.17 6.17 4.5 7 4.5C7.83 4.5 8.5 5.17 8.5 6C8.5 6.83 7.83 7.5 7 7.5ZM18.5 18.5H15.5V13.9C15.5 12.7 14.5 11.8 13.3 11.8C12.1 11.8 11.1 12.7 11.1 13.9V18.5H8.5V8.5H11.1V9.8C11.6 9.3 12.5 8.5 13.3 8.5C16.1 8.5 18.5 10.9 18.5 13.7V18.5Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Explore</h3>
+                    <ul>
+                        <li><a href="index.html#about">About CAIRNIMI</a></li>
+                        <li><a href="index.html#how-it-works">How It Works</a></li>
+                        <li><a href="index.html#applications">Applications</a></li>
+                        <li><a href="index.html#visual-codes">Visual Codes</a></li>
+                        <li><a href="index.html#docs">Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Getting Started</a></li>
+                        <li><a href="#">Technical Papers</a></li>
+                        <li><a href="casestudies.html">Case Studies</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><a href="#">info@monsoonresearch.cc</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Press Inquiries</a></li>
+                        <li><a href="#">Partnerships</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="copyright">
+                    © 2025 <span>Vernal Systems / Monsoon Researches</span> / CAIRNIMI. All rights reserved.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">License</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add scroll animation for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
+            } else {
+                header.style.boxShadow = 'none';
+            }
+        });
+        
+        // Create random hexagons
+        function createHexagons() {
+            const hexBackground = document.querySelector('.hex-background');
+            for (let i = 0; i < 6; i++) {
+                const hex = document.createElement('div');
+                hex.classList.add('hex');
+                const size = Math.random() * 40 + 20;
+                hex.style.width = `${size}px`;
+                hex.style.height = `${size}px`;
+                hex.style.left = `${Math.random() * 100}%`;
+                hex.style.top = `${Math.random() * 100 + 75}%`;
+                hex.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                hex.style.animationDelay = `${Math.random() * 10}s`;
+                hexBackground.appendChild(hex);
+            }
+        }
+        
+        
+    </script>
+
+
+<script>
+    document.querySelectorAll('.tab-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+  
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  
+        button.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+  </script>
+
+<script>
+    const buttons = document.querySelectorAll('.tab-button-prps');
+    const sections = document.querySelectorAll('.tab-content-prps section');
+  
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.add('hidden-prps'));
+  
+        btn.classList.add('active');
+        console.log(btn.dataset.tab)
+        document.getElementById(btn.dataset.tab).classList.remove('hidden-prps');
+      });
+    });
+  </script>
+</body>
+</html>

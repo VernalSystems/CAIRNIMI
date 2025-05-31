@@ -1,0 +1,2800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAIRNIMI — Spatial Index of Referenced Entities and Names</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   
+    <style>
+        :root {
+            --deep-space-blue:   #0B1E36;
+            --tropical-green:    #022219;;
+            --terra-orange:      #FF6F3C;
+            --data-mint:         #7FFFD4;
+            --bone-white:        #EAEAEA;
+            --slate-gray:        #B4C6C0;
+            --warm-amber:        #F4C74F;
+            --silver-blue:       #A2D2FF;
+            --philippine-night:  #104b2a;
+            --transparent-blue:  rgba(11, 48, 54, 0.8);
+            --monsoon-verde:     #55f79e;
+            --highlight-yellow:  #f9cb40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--deep-space-blue);
+            color: var(--bone-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--transparent-blue);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(234, 234, 234, 0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+        }
+        
+        .logo svg {
+            margin-right: 0.5rem;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: var(--bone-white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--terra-orange);
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover:after {
+            width: 100%;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 80px;
+            overflow: hidden;
+        }
+        
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:  rgba(0, 29, 19, 0.84);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4rem;
+        }
+        
+        .hero-text {
+            flex: 1;
+        }
+        
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .hero-text h1 span {
+            color: var(--terra-orange);
+        }
+        .hero-text h3 span {
+            color: var(--terra-orange);
+        }
+        
+        .hero-text p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--terra-orange);
+            color: var(--deep-space-blue);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF8C5A;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 111, 60, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--bone-white);
+            border: 2px solid var(--bone-white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(234, 234, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .code-sample {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(0);
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .code-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .code-label {
+            color: var(--slate-gray);
+            width: 100px;
+            flex-shrink: 0;
+        }
+        
+        .code-value {
+            color: var(--bone-white);
+        }
+        
+        .tile-name {
+            color: var(--data-mint);
+        }
+        
+        .offset {
+            color: var(--terra-orange);
+        }
+        
+        .timestamp {
+            color: var(--warm-amber);
+        }
+        
+        .vector {
+            color: var(--silver-blue);
+        }
+        
+        /* Section: What is CAIRNIMI */
+        .section {
+            padding: 8rem 0;
+        }
+        
+        .why-cairnimi {
+            margin-top: 2rem; 
+            margin-bottom: 2rem; 
+            padding: 2rem; 
+            padding-bottom: 4rem; 
+            background-color: var(--tropical-green); 
+            
+        }
+
+        .why-cairnimi .problem-container {
+            width: 45%;
+            margin-top: 2rem;
+            border-radius: 0.45rem;
+        }
+        
+        .why-cairnimi .problem {
+            color: var(--terra-orange);
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.75rem;
+            padding: 1.25rem;
+            background-color: rgba(0, 17, 17, 0.84);
+            border: var(--silver-blue) 1px solid;
+            border-radius: 0.45rem;
+            height: 100%;
+
+        }
+
+    
+
+        .why-cairnimi .problem .expl {
+            color: var(--slate-gray);
+            font-size: 1.0rem;
+            font-weight: unset;
+            margin-top: 2rem;
+            line-height: 1.4rem;
+
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .section-subtitle {
+            font-size: 1.25rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+            color: rgba(234, 234, 234, 0.8);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.5), rgba(11, 30, 54, 0.8));
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(127, 255, 212, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--philippine-night);
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        /* Code Structure Section */
+        .code-structure {
+            background: radial-gradient(circle at center, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-structure:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('/api/placeholder/1600/900');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        .code-breakdown {
+            background-color: rgba(11, 30, 54, 0.9);
+            border-radius: 24px;
+            padding: 3rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(127, 255, 212, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            
+            margin: 0 auto;
+        }
+        
+        .code-example {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: rgba(11, 30, 54, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+            position: relative;
+        }
+        
+        .code-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .component {
+            background-color: rgba(47, 62, 70, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .component:hover {
+            background-color: rgba(47, 62, 70, 0.5);
+            border-color: var(--data-mint);
+            transform: translateY(-5px);
+        }
+        
+        .component-name {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--data-mint);
+            margin-bottom: 0.75rem;
+        }
+        
+        .component-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .component-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            padding: 8rem 0;
+        }
+        
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .use-case-card {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(127, 255, 212, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .use-case-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(127, 255, 212, 0.3);
+        }
+        
+        .use-case-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .use-case-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--bone-white);
+        }
+        
+        .use-case-description {
+            color: rgba(234, 234, 234, 0.7);
+            font-size: 1rem;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        .use-case-link {
+            margin-top: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            color: var(--terra-orange);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .use-case-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Visual Rep Section */
+        .visual-rep {
+            background: linear-gradient(180deg, var(--deep-space-blue), rgba(11, 20, 34, 1));
+            padding: 8rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .visual-rep:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(244, 199, 79, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(127, 255, 212, 0.1) 0%, transparent 30%);
+            z-index: 0;
+        }
+        
+        .visual-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hex-examples {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 4rem 0;
+        }
+        
+        .hex-example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 220px;
+        }
+        
+        .hex-visual {
+            width: 180px;
+            height: 180px;
+            background-color: rgba(47, 62, 70, 0.5);
+            border: 1px solid var(--data-mint);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hex-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .hex-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+            text-align: center;
+        }
+        
+        /* Docs Section */
+        .docs {
+            padding: 8rem 0;
+        }
+        
+        .docs-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        
+        .docs-link {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.2), rgba(11, 30, 54, 0.4));
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--bone-white);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(47, 62, 70, 0.5);
+        }
+        
+        .docs-link:hover {
+            background: linear-gradient(145deg, rgba(47, 62, 70, 0.3), rgba(11, 30, 54, 0.5));
+            transform: translateY(-5px);
+            border-color: rgba(127, 255, 212, 0.5);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .docs-link-icon {
+            font-size: 1.5em;
+            margin-bottom: 1rem;
+            color: var(--data-mint);
+        }
+        
+        .docs-link-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .docs-link-desc {
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.7);
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(11, 20, 34, 1);
+            padding: 5rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        footer:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--data-mint), transparent);
+            opacity: 0.3;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+        
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--bone-white);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-about {
+            font-size: 0.95rem;
+            color: rgba(234, 234, 234, 0.7);
+            margin-bottom: 1.5rem;
+            max-width: 300px;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(47, 62, 70, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bone-white);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: var(--terra-orange);
+            transform: translateY(-3px);
+        }
+        
+        .footer-links h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--bone-white);
+        }
+        
+        .footer-links ul {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(234, 234, 234, 0.7);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--terra-orange);
+        }
+        
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(47, 62, 70, 0.5);
+            font-size: 0.9rem;
+            color: rgba(234, 234, 234, 0.6);
+        }
+        
+        .copyright span {
+            color: var(--data-mint);
+        }
+        
+        .footer-legal {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-legal a {
+            color: rgba(234, 234, 234, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-legal a:hover {
+            color: var(--terra-orange);
+        }
+        
+        /* Animated background hexagons */
+        .hex-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background-image: url('Y.jpg') ;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /* background-color: var(--tropical-green); */
+        }
+        
+        .hex {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(127, 255, 212, 0.05);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: float-hex 20s infinite linear;
+        }
+        
+        @keyframes float-hex {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .hero-content {
+                flex-direction: column;
+                gap: 4rem;
+            }
+            
+            .hero-text {
+                text-align: center;
+            }
+            
+            .hero-text p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .cta-buttons {
+                justify-content: center;
+            }
+            
+            .hero-visual {
+                width: 100%;
+            }
+            
+            .code-sample {
+                position: relative;
+                bottom: auto;
+                width: 100%;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .section {
+                padding: 4rem 0;
+            }
+            
+            .code-breakdown {
+                padding: 1.5rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+        
+        /* SVG animations */
+        .hexagonal-grid path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: dash 3s ease-in-out forwards;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        /* 3D Hex Animation */
+        .hex-3d-container {
+            width: 300px;
+            height: 300px;
+            perspective: 1200px;
+            position: relative;
+        }
+        
+        .hex-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate 15s infinite linear;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotateX(0) rotateY(0);
+            }
+            to {
+                transform: rotateX(360deg) rotateY(360deg);
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .tab-container {
+    margin: 6rem 2rem;
+    padding: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+    max-width: unset;
+  }
+
+  .tab-buttons {
+    display: flex;
+    background-color: var(--philippine-night);
+    border-radius: 1rem 1rem 0 0;
+    overflow: hidden;
+  }
+
+  .tab-buttons button {
+    flex: 1;
+    padding: 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--philippine-night);
+    border: none;
+    outline: none;
+    color: var(--bone-white);
+    transition: background 0.3s;
+  }
+
+  .tab-buttons button.active {
+    background-color: var(--warm-amber);
+    color: var(--philippine-night);
+    font-weight: bold;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 2rem;
+    padding-bottom: 4rem;
+    background-color: var(--philippine-night);
+    color: var(--bone-white);
+    border-radius: 0 0 1rem 1rem;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .tab-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--warm-amber);
+    text-align: center;
+  }
+
+  .tab-content p {
+    color: rgba(234, 234, 234, 0.8);
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .tab-content table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--bone-white);
+    font-size: 1rem;
+    overflow-x: auto;
+  }
+
+  .tab-content th, .tab-content td {
+    padding: 1rem;
+    text-align: left;
+  }
+
+  .tab-content thead tr {
+    background-color: var(--transparent-blue);
+  }
+
+  .tab-content th:nth-child(2),
+  .tab-content td:nth-child(2) {
+    background-color: var(--warm-amber);
+    color: var(--philippine-night);
+  }
+
+
+
+
+
+
+
+
+  .tab-container-prps {
+      display: flex;
+      height: 100vh;
+      border: 1px solid var(--highlight-yellow);
+      border-radius: 0.45rem;
+      padding: 2rem;
+      background: var(--tropical-green);
+    }
+
+    .tab-list-prps {
+      min-width: 220px;
+      background-color: #121528;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .tab-button-prps {
+      background: none;
+      border: none;
+      color: white;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      text-align: left;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .tab-button-prps .active {
+      background-color: var(--terra-orange);
+      color: var(--deep-space-blue);
+      font-weight: bold;
+    }
+
+    .tab-content-prps {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    
+
+    .content-wrapper-prps {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .grid-prps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .card-prps {
+      background-color: var(--transparent-blue);
+      padding: 2rem;
+      border-radius: 1.5rem;
+    }
+
+    .cta-prps {
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .cta-prps a {
+      padding: 1rem 2rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+
+    .hidden-prps {
+      display: none;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                
+
+                <svg
+                width="15mm"
+                height="15mm"
+                viewBox="0 0 238.11064 230.55114"
+                version="1.1"
+                id="svg1"
+                xml:space="preserve"
+                inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+                sodipodi:docname="logo_2.svg"
+                inkscape:export-filename="BG.png"
+                inkscape:export-xdpi="96"
+                inkscape:export-ydpi="96"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                  id="namedview1"
+                  pagecolor="#ffffff"
+                  bordercolor="#000000"
+                  borderopacity="0.25"
+                  inkscape:showpageshadow="2"
+                  inkscape:pageopacity="0.0"
+                  inkscape:pagecheckerboard="0"
+                  inkscape:deskcolor="#d1d1d1"
+                  inkscape:document-units="mm"
+                  showgrid="true"
+                  inkscape:zoom="5.5267742"
+                  inkscape:cx="19.450768"
+                  inkscape:cy="4.9757777"
+                  inkscape:window-width="1176"
+                  inkscape:window-height="1052"
+                  inkscape:window-x="743"
+                  inkscape:window-y="0"
+                  inkscape:window-maximized="0"
+                  inkscape:current-layer="layer1"><inkscape:grid
+                    id="grid1"
+                    units="mm"
+                    originx="0"
+                    originy="0"
+                    spacingx="1.0000005"
+                    spacingy="1"
+                    empcolor="#0099e5"
+                    empopacity="0.30196078"
+                    color="#0099e5"
+                    opacity="0.14901961"
+                    empspacing="5"
+                    enabled="true"
+                    visible="true" /></sodipodi:namedview><defs
+                  id="defs1" /><g
+                  inkscape:label="Ebene 1"
+                  inkscape:groupmode="layer"
+                  id="layer1"><path
+                    id="path3"
+                    style="fill:none;fill-opacity:0.996078;stroke:#d71d03;stroke-width:6.04725;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                    d="m 195.30308,-207.30373 -38.65801,68.03489 H 79.329035 l -38.658013,-68.03489 38.658013,-68.0349"
+                    sodipodi:nodetypes="ccccc" /><g
+                    id="g1"
+                    transform="matrix(-0.15841219,-0.96083331,0.99876702,-0.15239561,13.059161,240.19782)"><path
+                      id="path1"
+                      style="fill:none;fill-opacity:0.996078;stroke:#03d8bd;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="m 140.53653,85.994416 19.46355,34.160494 -19.46355,34.16048 h -38.92709"
+                      sodipodi:nodetypes="cccc" /><path
+                      id="path4"
+                      style="fill:none;fill-opacity:0.996078;stroke:#25d103;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="m 209.37556,118.82202 -38.75093,64.63311 M 54.371827,118.82202 93.122764,54.188918 h 77.501866 l 38.75093,64.633102"
+                      sodipodi:nodetypes="cccccc" /><path
+                      id="path5"
+                      style="fill:none;fill-opacity:0.996078;stroke:#eba603;stroke-width:8.91908;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                      d="M 178.66897,213.7324 H 68.7981 L 13.86267,117.53628 68.7981,21.340137"
+                      sodipodi:nodetypes="cccc" /></g></g></svg>
+             
+
+                CAIRNIMI
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#applications">Applications</a></li>
+                    <li><a href="#visual-codes">Visual Codes</a></li>
+                    <li><a href="#docs">Docs</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+            <p>
+                CAIRNIMI IS WORK IN PROGRESS
+            </p>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" >
+        <div class="hex-background">
+            
+        </div>
+        <div class="container" style="height: 96vh;align-items: center; display: flex;  width: 96%; z-index: 2;">
+            <div class="hero-content" style="height: 96%;   width: 99%;">
+                <div class="hero-text" style="height: 100%; align-content: center;">
+                    <h1>
+                        CAIRNIMI
+                        <p style="font-size: 24pt;">
+                            A <span>Semantic Identity</span> System for Space and Time
+                        </p>
+                    </h1>
+                    <h3>
+                        CAIRNIMI (<span>C</span>ontextual <span>A</span>nchoring of <span>I</span>dentifiers in <span>R</span>eferenced <span>N</span>ames with <span>I</span>ntegrated <span>M</span>etadata and <span>I</span>nference )
+                    </h3>
+                    <p>empowers you to encode space, structure, and time into symbolic, human-readable codes. A revolutionary approach to spatial indexing for next-generation applications.</p>
+                    <div class="cta-buttons">
+                        <a href="#" class="btn btn-primary">Try Demo</a>
+                        <a href="#" class="btn btn-secondary">Read the Docs</a>
+                        <br>
+                        <a href="#" class="btn btn-secondary" style="border-color: var(--terra-orange);">FAQ for Enterprise</a>
+                    </div>
+                </div>
+                <div class="hero-visual" style="display: flex; justify-content: center; position: relative; height: 64%;">
+                    <div class="hex-3d-container">
+                        
+                    </div>
+                    <div class="code-sample">
+                        <div class="code-line">
+                            <span class="code-label">Code:</span>
+                            <span class="code-value">
+                                <span class="tile-name">SILVERON::COVE::DAWNRISE::FLUX:: XENOLITH::NORM::ZEALWISE::BURJ</span> | 
+                                <span class="offset">+3 -2 +0</span> 
+                                <span class="timestamp">@2025-05-05T00:00Z</span> 
+                                <span class="vector">#Line</span> !
+                            </span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Location:</span>
+                            <span class="code-value">Granada Coast, Spain</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Tile Resolution:</span>
+                            <span class="code-value">10m</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="code-label">Code Accuracy:</span>
+                            <span class="code-value">± &lt; 1m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+    </section>
+
+
+    
+
+    <!-- What is CAIRNIMI Section -->
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">What is CAIRNIMI?</h2>
+            <p class="section-subtitle">A revolutionary spatial indexing system that encodes geographic and abstract locations into a concise, semantically meaningful format.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3h18v18H3z"/>
+                            <path d="M12 8v8M8 12h8"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Recursive Tiling</h3>
+                    <p class="feature-description">CAIRNIMI subdivides the Earth through recursive grid patterns, alternating between 8×8 and 4×4 subdivisions for efficient spatial indexing at multiple scales.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Semantic Naming</h3>
+                    <p class="feature-description">Unlike traditional coordinates, CAIRNIMI uses structured vocabulary to create location identifiers that are both human-readable and machine-processable.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Vector & Time Encoding</h3>
+                    <p class="feature-description">CAIRNIMI allowes for the representation of not just known plots, but also any point, line, curve, region, as well as time-bound spatial entities.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 19,7 19,17 12,22 5,17 5,7" />
+                            <!--
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        
+                            -->
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Hex Symbol Codes</h3>
+                    <p class="feature-description">Each CAIRNIMI code can be paired with a compact QR-esque visual representation, ideal for scannable markers, augmented reality, and visual documentation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="why-cairnimi" >
+
+        <div >
+
+            <h2 style="color: var(--warm-amber); font-size: 2.5rem; line-height: 3.45rem;">
+                4.5 billion people lack reliable property addresses, 
+                <br>
+                and even GPS fails in many places.
+            </h2>
+
+            <div style="display: flex; justify-content: space-around; gap: 2rem;">
+                <div class="problem-container" style="background-image: url('aa.png'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+                    <div class="problem" >
+                        Real estate in informal zones can't be tracked or subdivided reliably.
+                        <div class="expl" style="font-weight: 500;">
+                            A land owner owning a mate cultivation field in Argentina may not have an official address. 
+                            It might be better and simpler to use: 
+                            <br>
+                            <br>
+                            <div style="display: flex;">
+                                <div style="display: flex; justify-content: space-around;align-items: end;">
+
+                                    <blockquote style="font-weight: 600;">
+                                        GALEFLOW::GALE:: <br>
+                                        HALCYONE::HILO::YONDERER::LUNA:: <br>
+                                        JADEPOOL::FLUX <br>
+                                        & S2 E1 S4
+                                    </blockquote>
+                                </div>
+                            </div>
+                            <br><br>
+                            to describe an entire field than a series of GPS coordinates, such as -35.9731074,-62.7328794, -35.9549612,-62.7180146, -35.9550476,-62.7013211, .... .
+                            <br>Additionaly, once this address is specified, there is no need to consult any Address database. Once can simply calculate the location starting from a vector map of planet Earth.
+
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="problem-container" style="background-image: url('bb.png'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+                    <div class="problem">
+                        Drones and machines can't describe their footprints in a data-rich way.
+                        <div class="expl" style="font-weight: 500;">
+                            Sure, a GPS coordinate list can be mined for data, and information can be extracted. 
+                            But this isn't always intuitive.
+                            <br><br>
+                            Instead, consider, 
+                            <br><br>
+                            
+                            <div style="display: flex;">
+                                <div style="display: flex; justify-content: space-around;align-items: end;">
+                                    <blockquote style="font-weight: 600; margin-left: 2rem; width: 64%;">
+                                        LIMATILE | 0 0 0 <br>
+                                        @ 2025-03-02T15:16:27Z +07:00 <br>
+                                        # RBN [<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;    OAKTREE, HOUSE, LAKESHORE<br>
+                                        ] [<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;    TURNPARMS<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;    KNOTU, KNOTV<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;    BEZIERPATH <br>
+                                        ]<br>
+                                        ! {<br>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;    SurveyID : 1092 <br>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;Client   : RED-CARDINAL-DARK-1625 <br>
+                                        }<br>
+                                        <br>
+                                    </blockquote>
+                                    <blockquote style="font-weight: 600; margin-left: 2rem; width: 64%;">
+
+                                        [cont from left side]
+                                        <br><br>
+                                        ==<br>
+                                        LIMATILE / HEATHAZE::KORI::KINETICS::LUNA::PEARLMOR::JOVE <br>
+                                        OAKTREE / [(0,0,0), (1,0,0), (2,0,0)] <br>
+                                        HOUSE   / [(0,1,0), (1,1,1), (2,1,0)] <br>
+                                        LAKESHORE / [(0,2,0), (1,2,0), (2,2,0)] <br>
+                                        <br>
+                                        TURNPARMS / [HIGH, HIGH, HIGH]<br>
+                                        HIGH /  (1,1,1)<br>
+                                        KNOTU / [0, 0, 0, 1, 1, 1]<br>
+                                        KNOTV / [0, 0, 0, 1, 1, 1]<br>
+                                        <br>
+                                        BEZIERPATH / BEZIER<br>
+                                        ==<br>
+                                    </blockquote>
+    
+                                </div>
+                                
+                                
+                            </div>
+
+                            <br><br>
+                            It is much clear now, that a surveyis taking place in Lima, and the origin is set to the Tile's center.
+                            The flight path is between a OAKTREE, a HOUSE, and a point on a Lake Shore.
+                            The Turning Parameters are specified, as well as the path specifics.
+
+                            The variables are specified between a pair of qual signs.
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+            </div>
+
+            <div style="display: flex; justify-content: space-around; gap: 2rem;">
+                <div class="problem-container" style="background-image: url('cc.png'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+                    <div class="problem" >
+                        Current geocoding systems don't support geometry, 3D space, or time-based operations.
+                        <div class="expl" style="font-weight: 500;">
+                            
+                            The rich structure in CAIRNIMI allows everything to be aacurately represented, including
+
+                            <ol style="margin: 2rem;">
+                                <li>Air Corridors demonstrating Aircraft parking, Taxi, takeoff, flight and landing</li>
+                                <li>End-to-End Path of a product in a complex logistics chain</li>
+                                <li>Farm to Table compliance of a food product</li>
+                                <li>Telephone Signal distribution map</li>
+                                <li>3D structure of landmarks</li>
+                                <li>Civil Engineering surveys</li>
+                            </ol>
+
+                            The address system itself is rich enough to encode a full description of all related details.
+                        </div>
+                    </div>
+                </div>
+                <div class="problem-container" style="background-image: url('dd.png'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+                    <div class="problem">
+                        Data silos across logistics, utilities, and municipalities create friction and loss.
+                        <div class="expl" style="font-weight: 500;">
+                           Construction crews mishearing Newark (which is in New Jersey) as New York and tearing down a place 
+                           in Jersey Shore is a timeless joke that reached meme-status. However, problems like that aren't 
+                           unheard of. In Germany, the local auction and sales portal "Kleinanzeigen" have reported cases,
+                           where a buyer went to Frankfurt am Main, in central Germany, whereas, the coorect location 
+                           would have been Frankfurt am Oder in North East Germany.
+                            <br><br>
+                            This is not an exaggaration. Cairnimi ensures that there is NO two points on Earth with the same name.
+                            This way, information fidelity is preserved.
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+            </div>
+
+
+            
+
+        </div>
+
+    </section>
+
+
+
+    <div class="tab-container container">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="tab1">CAIRNIMI vs Plus Codes</button>
+          <button class="tab-btn" data-tab="tab2">CAIRNIMI vs what3words</button>
+          <button class="tab-btn" data-tab="tab3">CAIRNIMI vs GPS (for Drone)</button>
+        </div>
+      
+        <div id="tab1" class="tab-content active">
+          <!-- Paste Section 1 Content Here (CAIRNIMI vs Plus Codes) -->
+            <section class="comparison-section container" style="margin-top: 6rem; padding: 2rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 1rem; margin: 0 2rem; max-width: unset;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">CAIRNIMI vs. Google Plus Codes</h2>
+            <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+                A deep dive into the systemic, computational, and architectural differences between CAIRNIMI and Plus Codes (OLC).
+            </p>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                    <thead>
+                        <tr style="background-color: var(--transparent-blue); text-align: left;">
+                            <th style="padding: 1rem;">Aspect</th>
+                            <th style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">CAIRNIMI</th>
+                            <th style="padding: 1rem;">Google Plus Codes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 1rem;">Code Structure</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Semantically layered, symbolic names + vector/time metadata</td>
+                            <td style="padding: 1rem;">Alphanumeric grid codes derived from lat/long</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Shortened Code Uniqueness</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Globally unique without needing place names</td>
+                            <td style="padding: 1rem;">Require locality info to disambiguate</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Data Dependency</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Self-contained, not reliant on external locality datasets</td>
+                            <td style="padding: 1rem;">Sensitive to changes in locality/place name datasets</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Point-level Precision</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Supports sub-meter precision with offsets</td>
+                            <td style="padding: 1rem;">Area-based; doesn't uniquely identify units inside buildings</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Grid System Alignment</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Adaptable tiling; semantically anchored tiles</td>
+                            <td style="padding: 1rem;">Fixed WGS84 grid; may misalign with property or administrative lines</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Computation & Proximity</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Direct proximity analysis from encoded structure</td>
+                            <td style="padding: 1rem;">Requires full decoding for spatial comparison</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">AI Integration</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Symbolic and vector-compatible, ideal for AI parsing</td>
+                            <td style="padding: 1rem;">Limited semantic meaning; not structured for symbolic AI</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">Infrastructure Dependency</td>
+                            <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Open and portable with no central dependency</td>
+                            <td style="padding: 1rem;">Effectively tied to Google Maps for usability</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            </section>
+        </div>
+      
+        <div id="tab2" class="tab-content">
+          <!-- Paste Section 2 Content Here (CAIRNIMI vs what3words) -->
+            <section class="comparison-section container" style="margin-top: 6rem; padding: 2rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 1rem; margin: 0 2rem; margin-top: 4rem; max-width: unset;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">CAIRNIMI vs. what3words</h2>
+                <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+                    A detailed technical comparison of CAIRNIMI and what3words reveals key design strengths and limitations in symbolic geocoding systems.
+                </p>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                        <thead>
+                            <tr style="background-color: var(--transparent-blue); text-align: left;">
+                                <th style="padding: 1rem;">Aspect</th>
+                                <th style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">CAIRNIMI</th>
+                                <th style="padding: 1rem;">what3words</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 1rem;">Transparency & Openness</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Open semantics and structure; vendor-independent</td>
+                                <td style="padding: 1rem;">Proprietary and closed-source; vendor lock-in</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Address Confusion Resistance</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Created with semantic anchoring, optional checks</td>
+                                <td style="padding: 1rem;">Confusable nearby addresses; no inherent error correction</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Error Correction Capabilities</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Optional metadata and vector correction fields</td>
+                                <td style="padding: 1rem;">No checksums or intrinsic error detection</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Word Semantics</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Layered and semantic word composition</td>
+                                <td style="padding: 1rem;">Words are arbitrary and semantically empty</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Spatial Resolution</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Multiscale: from region to sub-meter with offset</td>
+                                <td style="padding: 1rem;">Fixed 3×3 meter grid; no hierarchy or scale</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Offline/Independent Use</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Fully self-contained and interpretable</td>
+                                <td style="padding: 1rem;">API-dependent for suggestions and validation</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Vector & Time Support</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Includes vector shapes and temporal data</td>
+                                <td style="padding: 1rem;">Lacks built-in vector or temporal encoding</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;">Legal and Ecosystem Flexibility</td>
+                                <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">No legal restriction on independent implementations</td>
+                                <td style="padding: 1rem;">Legal threats to open implementations; no ecosystem freedom</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+      
+        <div id="tab3" class="tab-content">
+          <!-- Paste Section 3 Content Here (CAIRNIMI vs Others or future table) -->
+            <section class="comparison-section container" style="margin-top: 6rem; padding: 2rem; padding-bottom: 4rem; background-color: var(--philippine-night); border-radius: 1rem; margin: 0 2rem; margin-top: 4rem; max-width: unset;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--warm-amber); text-align: center;">CAIRNIMI vs. GPS Coordinates for Drone Operators</h2>
+                <p style="color: rgba(234, 234, 234, 0.8); text-align: center; margin-bottom: 2.5rem;">
+                A technical comparison of CAIRNIMI symbolic spatial codes versus raw GPS coordinates, with a focus on autonomy, swarming, offline execution, and secure operations in aerial robotics.
+                </p>
+                <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; color: var(--bone-white); font-size: 1rem;">
+                    <thead>
+                    <tr style="background-color: var(--transparent-blue); text-align: left;">
+                        <th style="padding: 1rem;">Aspect</th>
+                        <th style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">CAIRNIMI</th>
+                        <th style="padding: 1rem;">GPS Coordinates</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td style="padding: 1rem;">Symbolic Navigation</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Supports high-level symbolic waypoints (e.g., "ZONE::PORTAL::BRAVO") for behavior trees and swarm logic</td>
+                        <td style="padding: 1rem;">Requires mapping or external semantic layers to interpret raw coordinates</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Offline Execution</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Codes are easily translated, and resolved locally without internet, based on a local station- especially useful in GPS denied environments</td>
+                        <td style="padding: 1rem;">May require live maps or correction layers (e.g., RTK, SBAS) for precision</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Swarm Interoperability</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Encodes areas, volumes, and vector paths — ideal for coordinated drone movement and collision avoidance</td>
+                        <td style="padding: 1rem;">Must be manually grouped or tagged for shared understanding among units</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Security & Spoofing Resistance</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Supports signed/verifiable codes and authorized mission zones</td>
+                        <td style="padding: 1rem;">Raw coordinates are spoofable without strong attestation mechanisms</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Precision & Sub-Zoning</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Includes offset vectors and zone shapes for precise indoor/outdoor localization</td>
+                        <td style="padding: 1rem;">Limited to point precision; no built-in shape or structure definition</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Auditability & Replay</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Codes can embed time, event, and shape data for flight log replay or compliance</td>
+                        <td style="padding: 1rem;">Requires external timestamping or flight log metadata to reconstruct missions</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Human-Machine Interface</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Readable symbolic codes for quick reference in UIs, mission planners, and HUDs</td>
+                        <td style="padding: 1rem;">Decimal GPS requires GUI translation; hard to verify visually</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Temporal Encoding</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Supports mission windows, time-based access control, or evolving spatial conditions</td>
+                        <td style="padding: 1rem;">No native temporal structure; must be externally attached</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem;">Computation Efficiency</td>
+                        <td style="padding: 1rem; background-color: var(--warm-amber); color: var(--philippine-night);">Encodes hierarchical structure for easier sorting, indexing, and proximity analysis</td>
+                        <td style="padding: 1rem;">Requires floating-point math for comparisons; no hierarchy</td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>
+            </section>
+        </div>
+      </div>
+
+
+
+    
+
+    
+    
+    
+      
+      
+    
+
+    <!-- Code Structure Section -->
+    <section class="code-structure" id="how-it-works" style="background: #0b1e13;  padding: 2rem; margin-top: 2rem;">
+        <div class="container">
+            <h2 class="section-title">Code Structure</h2>
+            <p class="section-subtitle">CAIRNIMI's powerful format combines location, time, and shape information in a single, versatile reference.</p>
+            
+            <div class="code-breakdown">
+                <div class="code-example">
+                    <span class="tile-name">SILVERON::COVE</span> | 
+                    <span class="offset">+3 -2 +0</span> 
+                    <span class="timestamp">@2025-05-05T00:00Z</span> 
+                    <span class="vector">#Line</span> !{Future use}
+                </div>
+                
+                <div class="code-components">
+                    <div class="component">
+                        <div class="component-name">Tile Name</div>  
+                        <div class="component-value tile-name">SILVERON::COVE</div>
+                        <div class="component-desc">Semantic identifier for the spatial tile, drawn from a structured vocabulary.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">XYZ Offset</div>  
+                        <div class="component-value offset">+3 -2 +0</div>
+                        <div class="component-desc">Positional offsets in meters from the tile center (X=east-west, Y=north-south, Z=vertical).</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Timestamp</div>  
+                        <div class="component-value timestamp">@2025-05-05T00:00Z</div>
+                        <div class="component-desc">ISO 8601 timestamp for capturing temporal data or for time-sensitive locations.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Vector</div>  
+                        <div class="component-value vector">#Line</div>
+                        <div class="component-desc">Vector shape or geometric region associated with the location.</div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-name">Reserved</div>  
+                        <div class="component-value"> !{Future use}</div>
+                        <div class="component-desc">Reserved for future mathematical expressions or metadata tags.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section class="use-cases section" id="applications">
+        <div class="container" style="max-width: unset;">
+            <h2 class="section-title">Use Cases</h2>
+            <p class="section-subtitle">CAIRNIMI's versatile format enables a wide range of applications across different domains.</p>
+            
+            <div class="use-cases-grid">
+                <div class="use-case-card">
+                    <div class="use-case-icon">🔍</div>
+                    <h3 class="use-case-title">Geospatial Analysis</h3>
+                    <p class="use-case-description">Analyze environmental data, track migrations, or monitor geological changes with precise, time-aware spatial references.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">🌐</div>
+                    <h3 class="use-case-title">Decentralized Spatial Registries</h3>
+                    <p class="use-case-description">Create immutable records of locations, boundaries, and spatial assets in distributed ledger systems.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">📡</div>
+                    <h3 class="use-case-title">Sensor Networks & IoT</h3>
+                    <p class="use-case-description">Deploy and manage distributed sensor networks with meaningful, hierarchical location identifiers.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">🌍</div>
+                    <h3 class="use-case-title">Cultural & Historical Marking</h3>
+                    <p class="use-case-description">Document cultural landmarks, historical events, and points of interest with rich spatial context.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+                
+                <div class="use-case-card">
+                    <div class="use-case-icon">✨</div>
+                    <h3 class="use-case-title">AR/XR Spatial Anchoring</h3>
+                    <p class="use-case-description">Create persistent augmented reality experiences with stable, human-readable spatial references.</p>
+                    <a href="#" class="use-case-link">Learn more →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <div class="tab-container-prps" style="margin: 1.5rem;">
+        <div class="tab-list-prps">
+          <button class="tab-button-prps active" data-tab="realestate">Real Estate</button>
+          <button class="tab-button-prps" data-tab="logistics">Logistics</button>
+          <button class="tab-button-prps" data-tab="telecom">Telecom & Infrastructure</button>
+          <button class="tab-button-prps" data-tab="emergency">Emergency Services</button>
+          <button class="tab-button-prps" data-tab="energy">Energy & Utilities</button>
+          <button class="tab-button-prps" data-tab="insurance">Insurance & Risk</button>
+        </div>
+      
+        <div class="tab-content-prps">
+            <section  id="realestate" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;" class="content-wrapper-prps">
+                  <h2 style="font-size: 2.5rem; color: var(--warm-amber); text-align: center; margin-bottom: 1rem;">Cairnimi for Real Estate</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Anchor your listings, properties, and developments in a future-proof, verifiable spatial identity system.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <!-- Benefit Card 1 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                     
+                      <h3 style="color: var(--data-mint); font-size: 1.5rem; margin-bottom: 1rem;"> <i class="fas fa-building-shield"></i> &nbsp;&nbsp;Verified Property Identity</h3>
+                      <p>Each property or unit can be assigned a unique Cairnimi code with optional <strong>Vernal Verification</strong>, protecting buyers and renters from spoofed listings.</p>
+                    </div>
+              
+                    <!-- Benefit Card 2 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--terra-orange); font-size: 1.5rem; margin-bottom: 1rem;"><i class="fas fa-ruler"></i> &nbsp;&nbsp; Sub-Unit Precision</h3>
+                      <p>Use Cairnimi's <strong>vector and offset support</strong> to distinguish units inside buildings — suites, penthouses, or even sub-leased co-working areas.</p>
+                    </div>
+              
+                    <!-- Benefit Card 3 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--warm-amber); font-size: 1.5rem; margin-bottom: 1rem;"><i class="fas fa-anchor" ></i> &nbsp;&nbsp;Permanent Spatial Anchors</h3>
+                      <p>Unlike addresses that change, Cairnimi codes provide a <strong>stable reference</strong> that lasts beyond renovations, renaming, or city boundary shifts.</p>
+                    </div>
+              
+                    <!-- Benefit Card 4 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--highlight-yellow); font-size: 1.5rem; margin-bottom: 1rem;">AI-Ready Property Metadata</h3>
+                      <p>Each code can optionally include <strong>temporal data, geoshapes, and tags</strong> — enabling smarter analytics, AR overlays, and market pattern analysis.</p>
+                    </div>
+              
+                    <!-- Benefit Card 5 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--bone-white); font-size: 1.5rem; margin-bottom: 1rem;">Interoperability & Branding</h3>
+                      <p>Use Cairnimi codes in brochures, signs, QR overlays, drone surveys, or listings. <strong>Symbolic yet scannable</strong>, they're the future of property reference.</p>
+                    </div>
+                  </div>
+              
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--data-mint); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      Get Started with Cairnimi
+                    </a>
+                  </div>
+                </div>
+            </section>
+
+            <section id="logistics" class="hidden-prps" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;" class="content-wrapper-prps">
+                  <h2 style="font-size: 2.5rem; color: var(--terra-orange); text-align: center; margin-bottom: 1rem;">Cairnimi for Logistics & Shipping</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Elevate supply chains with precise, verifiable, and programmable location identities.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <!-- Benefit Card 1 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--data-mint); font-size: 1.5rem; margin-bottom: 1rem;">Tamper-Proof Waypoints</h3>
+                      <p>Assign each depot, cross-dock, or delivery hub a <strong>verifiable Cairnimi code</strong> to prevent spoofing and misrouting.</p>
+                    </div>
+              
+                    <!-- Benefit Card 2 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--warm-amber); font-size: 1.5rem; margin-bottom: 1rem;">Sub-Zone Precision</h3>
+                      <p>Define <strong>zones within warehouses</strong> or delivery bays using offsets and shapes embedded within the code.</p>
+                    </div>
+              
+                    <!-- Benefit Card 3 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--highlight-yellow); font-size: 1.5rem; margin-bottom: 1rem;">Event & Time Encoding</h3>
+                      <p>Attach timestamps or event types to create <strong>spatiotemporal checkpoints</strong> for smart auditing and compliance.</p>
+                    </div>
+              
+                    <!-- Benefit Card 4 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--terra-orange); font-size: 1.5rem; margin-bottom: 1rem;">Offline Coordination</h3>
+                      <p>Cairnimi codes are <strong>self-contained</strong>, enabling location verification without internet access during transit.</p>
+                    </div>
+              
+                    <!-- Benefit Card 5 -->
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--bone-white); font-size: 1.5rem; margin-bottom: 1rem;">Trusted Carrier Handoffs</h3>
+                      <p>Codes can be cryptographically signed to support <strong>inter-carrier trust and checkpoint handoffs</strong>.</p>
+                    </div>
+                  </div>
+              
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--terra-orange); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      Integrate Cairnimi in Your Supply Chain
+                    </a>
+                  </div>
+                </div>
+            </section>
+
+            <section id="telecom" class="hidden-prps" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;">
+                  <h2 style="font-size: 2.5rem; color: var(--data-mint); text-align: center; margin-bottom: 1rem;">Cairnimi for Telecom & Infrastructure</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Precisely anchor towers, nodes, ducts, and underground infrastructure — with verifiable codes and audit trails.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--warm-amber); font-size: 1.5rem;">Fixed Asset Encoding</h3>
+                      <p>Assign each tower, cabinet, or manhole a unique, durable Cairnimi code that won't change when addresses do.</p>
+                    </div>
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--highlight-yellow); font-size: 1.5rem;">Subsurface Compatibility</h3>
+                      <p>Encode underground routes and nodes with spatial vectors and depth offsets — for full-stack asset indexing.</p>
+                    </div>
+                    <div style="background-color: var(--data-mint); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="font-size: 1.5rem;">Contractor Verification</h3>
+                      <p>Enable secure handoffs and remote field validation with signed, verifiable location IDs.</p>
+                    </div>
+                  </div>
+        
+        
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--terra-orange); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      Schedule a consulting session
+                    </a>
+                  </div>
+        
+                </div>
+            </section>
+
+            <section id="emergency" class="hidden-prps" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;">
+                  <h2 style="font-size: 2.5rem; color: var(--highlight-yellow); text-align: center; margin-bottom: 1rem;">Cairnimi for Emergency Services</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Deliver precision, speed, and trust in critical moments — from dispatch to drone-assisted response.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--data-mint); font-size: 1.5rem;">Sub-Meter Response Targets</h3>
+                      <p>Pinpoint exact doorways, zones, or trauma centers with verifiable codes embedded in medical records or drone UI.</p>
+                    </div>
+                    <div style="background-color: var(--warm-amber); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="font-size: 1.5rem;">Offline Resilience</h3>
+                      <p>Coordinate in disaster zones without relying on centralized address databases or real-time networks.</p>
+                    </div>
+                    <div style="background-color: var(--monsoon-verde); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="font-size: 1.5rem;">Temporal Geofencing</h3>
+                      <p>Use time-bound Cairnimi expressions for no-fly zones, safe corridors, or responder perimeter control.</p>
+                    </div>
+                  </div>
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--terra-orange); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      See How CAIRMINI improves your SOP
+                    </a>
+                  </div>
+                </div>
+            </section>
+
+            <section id="energy" class="hidden-prps" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;">
+                  <h2 style="font-size: 2.5rem; color: var(--warm-amber); text-align: center; margin-bottom: 1rem;">Cairnimi for Energy & Utilities</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Power infrastructure, grid control, and asset registries with permanent symbolic coordinates.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <div style="background-color: var(--data-mint); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="color: var(--terra-orange); font-size: 1.5rem;">Permanent Infrastructure ID</h3>
+                      <p>Assign unchanging spatial identifiers to poles, meters, solar arrays, or transformers — decoupled from human addresses.</p>
+                    </div>
+                    <div style="background-color: var(--tropical-green); padding: 2rem; border-radius: 1.5rem; color: var(--monsoon-verde);">
+                      <h3 style="color: var(--terra-orange); font-size: 1.5rem;">Encoded Maintenance Zones</h3>
+                      <p>Use shape vectors and tags to define service ranges, buffer zones, or outage clusters.</p>
+                    </div>
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--terra-orange); font-size: 1.5rem;">Grid Safety Integration</h3>
+                      <p>Attach risk data or alert conditions directly to spatial nodes for faster safety automation and crew alerts.</p>
+                    </div>
+                  </div>
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--terra-orange); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      Improve Energy Infrasructure with CAIRNIMI
+                    </a>
+                  </div>
+                </div>
+            </section>
+
+            <section id="insurance" class="hidden-prps" style="padding: 4rem 2rem; background-color: var(--deep-space-blue); color: var(--bone-white); font-family: 'Inter', sans-serif;">
+                <div style="max-width: 1100px; margin: auto;">
+                  <h2 style="font-size: 2.5rem; color: var(--terra-orange); text-align: center; margin-bottom: 1rem;">Cairnimi for Insurance & Risk</h2>
+                  <p style="font-size: 1.2rem; text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">
+                    Anchor risk, damage, and event intelligence directly to a symbolic geospatial ledger.
+                  </p>
+              
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <div style="background-color: var(--transparent-blue); padding: 2rem; border-radius: 1.5rem;">
+                      <h3 style="color: var(--data-mint); font-size: 1.5rem;">Claim Location Precision</h3>
+                      <p>Identify insured perimeters and affected zones down to sub-property resolution — no ambiguity, no fraud.</p>
+                    </div>
+                    <div style="background-color: var(--warm-amber); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="font-size: 1.5rem;">Disaster Risk Zoning</h3>
+                      <p>Combine Cairnimi codes with regional climate or seismic data for location-indexed risk models.</p>
+                    </div>
+                    <div style="background-color: var(--bone-white); padding: 2rem; border-radius: 1.5rem; color: var(--deep-space-blue);">
+                      <h3 style="font-size: 1.5rem;">Immutable Event Anchoring</h3>
+                      <p>Log weather, accident, or incident data immutably by time + place for audit and underwriting use.</p>
+                    </div>
+                  </div>
+                  <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#contact" style="padding: 1rem 2rem; background-color: var(--terra-orange); color: var(--deep-space-blue); border-radius: 2rem; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                      Implement CAIRNIMI to optimize payout
+                    </a>
+                  </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+    
+
+
+
+    
+
+    
+
+    
+    
+    
+      
+    <!-- Visual Representation Section -->
+    <section class="visual-rep" id="visual-codes">
+        <div class="container visual-content">
+            <h2 class="section-title">From Code to Symbol</h2>
+            <p class="section-subtitle">The aesthetics of space expressed through hexagonal symbolism — scannable, styleable, and information-rich.</p>
+            
+            <div style="display: flex; justify-content: space-around; margin: 4rem; padding: 2rem;">
+                <div>
+                    The CAIRNIMI QR code is a hexagonal-structured visual code designed to represent CAIRNIMI addresses, including:
+
+                        <ol style="margin:2rem;">
+                            <li>
+                                Symbolic tile hierarchy
+                            </li>
+                            <li>
+                                Precise location offsets
+                            </li>
+                            <li>
+                                Timestamp (if applicable)
+                            </li>
+                            <li>
+                                Shape and surface geometry
+                            </li>
+                            <li>
+                                Optional metadata
+                            </li>
+                        </ol>
+
+                    Unlike traditional square QR codes, CAIRNIMI's hexagonal pattern aligns better with geospatial and vector tiling logic. It supports robust error correction, enabling reliable scanning even in harsh or low-contrast environments.
+                        <br><br>
+                    As the system grows, the QR can be extended to include:
+
+                        <ol style="margin:2rem;">
+                            <li>Mathematical encodings (e.g. vector instructions, surface patches)</li>
+                            <li> Security metadata</li>
+                            <li>Revision history</li>
+                        </ol>
+
+                        
+
+                       
+
+                        
+
+                    This makes CAIRNIMI QR codes not just locators — but portable containers of spatial logic.
+                </div>
+                <div>
+
+                    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="97mm"
+   height="99mm"
+   viewBox="0 0 366.61418 374.17324"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   sodipodi:docname="codelayout_cln.svg"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.93957511"
+     inkscape:cx="480.0042"
+     inkscape:cy="436.89961"
+     inkscape:window-width="1920"
+     inkscape:window-height="1052"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"><inkscape:grid
+       id="grid1"
+       units="mm"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" /></sodipodi:namedview><defs
+     id="defs1" /><g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"><g
+       id="g13"
+       transform="matrix(0.60894022,0,0,0.60894022,-111.74122,-62.564102)"><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-8-9"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(223.99999,126.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-1"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(186.99999,61.000004)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-4"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(111.99999,61.000004)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-0.39490772,-2.4999972)" /><path
+         sodipodi:type="star"
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-37.000008,61.000004)" /><path
+         sodipodi:type="star"
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-8"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-75.000007,126.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-8-7"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(148.99999,126.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-8-2"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-8.3427836e-6,126.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-8-6"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(74.678761,126.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-7"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(37.462831,61.000004)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-4"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(149.99999,-3.3634122)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-8"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(74.689101,-2.4999972)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-3"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-8.342787e-6,255.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-4-8"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(149.99999,255.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-8-0"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(74.99999,255.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-1-2"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(186.99999,191.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-4-1"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(111.99999,191.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-9"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-37.000012,191.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-9-6"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(-37.000012,191.00001)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-9-6-3"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="matrix(0.80218996,0,0,0.80218996,43.987067,234.51822)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-9-6-3-5"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="matrix(0.80218996,0,0,0.80218996,155.78088,169.51822)" /><path
+         sodipodi:type="star"
+         style="fill:none;fill-opacity:0.996078;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="path1-2-7-6"
+         inkscape:flatsided="true"
+         sodipodi:sides="6"
+         sodipodi:cx="410"
+         sodipodi:cy="220"
+         sodipodi:r1="35"
+         sodipodi:r2="30.31089"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-1.0471976"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 410,185 30.31089,17.5 0,35 L 410,255 l -30.31089,-17.5 0,-35 z"
+         transform="translate(37.462827,191.00001)" /><rect
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="rect1"
+         width="1.4067319e-06"
+         height="52.5"
+         x="394.44965"
+         y="191.25"
+         ry="7.0336597e-07" /><rect
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="rect2"
+         width="1.8756427e-06"
+         height="70"
+         x="409.60507"
+         y="182.5"
+         ry="7.0336597e-07" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.56986,396.96169 24.3151,-14.03833 -10e-6,56.1533 -24.31509,-14.03833 z"
+         id="path2"
+         sodipodi:nodetypes="ccccc" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 417.15194,263.50001 60.62178,35 -30.31089,17.5 -30.31089,-17.5 z"
+         id="path3" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 409.99999,440.00001 -30.31089,17.5 v 35 l 30.31089,17.5 z"
+         id="path4" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 409.99999,440.00001 -30.31089,17.5 v 35 l 30.31089,17.5 z"
+         id="path5" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 417.15194,428.50001 v -35 l 30.31089,-17.5 30.31089,17.5 z"
+         id="path6" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 460.36367,331.96169 24.31509,-14.03832 24.31509,14.03832 v 28.07665 z"
+         id="path7" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 529.6891,199.13658 60.62177,35.00001 10e-6,-35.00001 -30.31089,-17.5 z"
+         id="path8" /><path
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         d="m 454.6891,457.50001 v 35 l 30.31089,17.5 30.31089,-17.5 z"
+         id="path9" /><rect
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="rect9"
+         width="60.621777"
+         height="1.6243542e-06"
+         x="566.68909"
+         y="393.5"
+         ry="7.0336597e-07" /><rect
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="rect10"
+         width="60.621777"
+         height="1.6243542e-06"
+         x="566.68909"
+         y="411"
+         ry="7.0336597e-07" /><rect
+         style="fill:#05ec17;fill-opacity:1;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+         id="rect11"
+         width="60.621777"
+         height="1.6243541e-06"
+         x="566.68909"
+         y="428.5"
+         ry="7.0336597e-07" /><g
+         id="text11"
+         style="font-size:32px;font-family:Didonesque;-inkscape-font-specification:Didonesque;letter-spacing:0px;fill:#05ec17;stroke:#05ec17;stroke-width:3.77953;stroke-linecap:round;stroke-linejoin:bevel"
+         aria-label="ARANDALE::LUNA::MERIDIEM::BURJ::&#10;WINDWARD::ORIN::NIGHTSEA::EONS"><path
+           style="stroke:none"
+           d="m 217.98364,598.92751 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 37.60003,7.616 c -0.224,0.416 -0.64,0.672 -1.088,0.672 -1.728,0 -2.08,-4.672 -2.464,-6.848 -0.64,-3.616 -2.08,-4.096 -4.576,-4.256 v -0.064 c 2.688,-0.384 5.088,-1.952 5.088,-5.632 0,-4.16 -3.072,-5.696 -6.72,-5.696 -1.056,0 -3.808,0.128 -5.44,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -10.048 h 3.264 c 2.272,0 2.72,2.336 3.296,5.44 0.576,3.104 1.248,5.632 4.992,5.632 1.408,0 2.144,-0.352 2.56,-1.024 z m -9.824,-10.496 h -3.968 v -10.752 c 0.864,-0.032 2.976,-0.064 3.392,-0.064 2.4,0 3.52,1.248 3.52,5.696 0,4.288 -1.216,5.12 -2.944,5.12 z m 29.28001,10.688 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 32.67202,-14.08 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 17.88801,-0.128 c -1.408,0 -2.912,0.128 -4.608,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 5.28 c 1.696,0 3.136,0.128 4.544,0.128 8.8,0 11.872,-4.832 11.872,-11.36 0,-7.648 -4.224,-11.296 -11.808,-11.296 z m -0.608,22.144 c -0.832,0 -1.728,-0.032 -2.592,-0.064 v -21.504 c 0.864,-0.032 1.856,-0.064 2.624,-0.064 4.992,0 8.224,1.344 8.224,11.136 0,9.088 -2.784,10.496 -8.256,10.496 z m 31.55194,-0.128 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 35.04003,1.28 c -0.128,3.2 -1.12,6.528 -5.76,6.528 h -5.472 v -21.376 h 2.976 v -0.512 h -9.664 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.304 v -7.04 z m 20.35201,0 c -0.128,3.2 -1.12,6.528 -6.08,6.528 h -5.184 v -10.688 h 3.072 c 2.272,0 2.816,2.368 3.136,4.704 h 0.384 v -10.016 h -0.384 c -0.32,2.336 -0.896,4.672 -3.136,4.672 h -3.072 v -10.048 h 4.32 c 4.96,0 5.952,2.592 6.08,4.416 h 0.384 v -4.928 h -17.472 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.336 v -7.04 z m 5.63198,-6.592 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15997,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 22.75197,-3.36 c -0.128,3.2 -1.12,6.528 -5.76,6.528 h -5.472 v -21.376 h 2.976 v -0.512 h -9.664 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.304 v -7.04 z m 18.08,-15.36 v 0.512 h 2.976 v 15.072 c 0,4.192 -2.336,6.688 -6.304,6.688 -3.392,0 -6.304,-1.792 -6.304,-7.232 v -14.528 h 2.976 v -0.512 h -9.664 v 0.512 h 2.976 v 13.856 c 0,6.304 4.864,8.544 9.44,8.544 6.112,0 7.648,-4.064 7.648,-7.872 v -14.528 h 2.976 v -0.512 z m 23.74402,0 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 24.80003,21.888 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 20.44802,-5.312 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15998,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 31.83997,-18.208 v -0.512 h -6.944 l -6.368,16.768 -6.336,-16.768 h -7.36 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -20.416 h 0.128 l 7.84,20.928 h 0.576 l 7.904,-20.928 h 0.128 v 20.416 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 z m 19.42398,14.848 c -0.128,3.2 -1.12,6.528 -6.08,6.528 h -5.184 v -10.688 h 3.072 c 2.272,0 2.816,2.368 3.136,4.704 h 0.384 v -10.016 h -0.384 c -0.32,2.336 -0.896,4.672 -3.136,4.672 h -3.072 v -10.048 h 4.32 c 4.96,0 5.952,2.592 6.08,4.416 h 0.384 v -4.928 h -17.472 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.336 v -7.04 z m 22.78398,6.336 c -0.224,0.416 -0.64,0.672 -1.088,0.672 -1.728,0 -2.08,-4.672 -2.464,-6.848 -0.64,-3.616 -2.08,-4.096 -4.576,-4.256 v -0.064 c 2.688,-0.384 5.088,-1.952 5.088,-5.632 0,-4.16 -3.072,-5.696 -6.72,-5.696 -1.056,0 -3.808,0.128 -5.44,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -10.048 h 3.264 c 2.272,0 2.72,2.336 3.296,5.44 0.576,3.104 1.248,5.632 4.992,5.632 1.408,0 2.144,-0.352 2.56,-1.024 z m -9.824,-10.496 h -3.968 v -10.752 c 0.864,-0.032 2.976,-0.064 3.392,-0.064 2.4,0 3.52,1.248 3.52,5.696 0,4.288 -1.216,5.12 -2.944,5.12 z m 10.88001,-11.2 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 2.976 v -0.512 z m 21.02399,-0.128 c -1.408,0 -2.912,0.128 -4.608,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 5.28 c 1.696,0 3.136,0.128 4.544,0.128 8.8,0 11.872,-4.832 11.872,-11.36 0,-7.648 -4.224,-11.296 -11.808,-11.296 z m -0.608,22.144 c -0.832,0 -1.728,-0.032 -2.592,-0.064 v -21.504 c 0.864,-0.032 1.856,-0.064 2.624,-0.064 4.992,0 8.224,1.344 8.224,11.136 0,9.088 -2.784,10.496 -8.256,10.496 z m 13.88797,-22.016 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 2.976 v -0.512 z m 29.08798,15.36 c -0.128,3.2 -1.12,6.528 -6.08,6.528 h -5.184 v -10.688 h 3.072 c 2.272,0 2.816,2.368 3.136,4.704 h 0.384 v -10.016 h -0.384 c -0.32,2.336 -0.896,4.672 -3.136,4.672 h -3.072 v -10.048 h 4.32 c 4.96,0 5.952,2.592 6.08,4.416 h 0.384 v -4.928 h -17.472 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.336 v -7.04 z m 29.31198,-14.848 v -0.512 h -6.944 l -6.368,16.768 -6.336,-16.768 h -7.36 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -20.416 h 0.128 l 7.84,20.928 h 0.576 l 7.904,-20.928 h 0.128 v 20.416 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 z m 4.79999,8.256 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15997,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 17.37597,-8.576 v -0.064 c 1.44,0 4.8,-1.184 4.8,-5.024 0,-3.168 -2.4,-5.184 -7.456,-5.184 -1.408,0 -2.944,0.128 -4.608,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 5.28 c 1.728,0 3.104,0.128 4.576,0.128 6.304,0 8.672,-2.912 8.672,-6.368 0,-4.864 -4.576,-6.016 -5.984,-6.016 z m -3.424,-9.76 c 3.072,0 4.576,1.376 4.576,4.992 0,3.616 -1.408,4.704 -4.128,4.704 h -2.88 v -9.632 c 0.864,-0.032 1.92,-0.064 2.432,-0.064 z m -0.032,21.632 c -0.544,0 -1.536,-0.032 -2.4,-0.064 v -11.232 h 2.56 c 4.192,0 5.12,1.312 5.12,5.664 0,4.288 -1.152,5.632 -5.28,5.632 z m 27.35999,-22.016 v 0.512 h 2.976 v 15.072 c 0,4.192 -2.336,6.688 -6.304,6.688 -3.392,0 -6.304,-1.792 -6.304,-7.232 v -14.528 h 2.976 v -0.512 h -9.664 v 0.512 h 2.976 v 13.856 c 0,6.304 4.864,8.544 9.44,8.544 6.112,0 7.648,-4.064 7.648,-7.872 v -14.528 h 2.976 v -0.512 z m 28.67203,21.696 c -0.224,0.416 -0.64,0.672 -1.088,0.672 -1.728,0 -2.08,-4.672 -2.464,-6.848 -0.64,-3.616 -2.08,-4.096 -4.576,-4.256 v -0.064 c 2.688,-0.384 5.088,-1.952 5.088,-5.632 0,-4.16 -3.072,-5.696 -6.72,-5.696 -1.056,0 -3.808,0.128 -5.44,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -10.048 h 3.264 c 2.272,0 2.72,2.336 3.296,5.44 0.576,3.104 1.248,5.632 4.992,5.632 1.408,0 2.144,-0.352 2.56,-1.024 z m -9.824,-10.496 h -3.968 v -10.752 c 0.864,-0.032 2.976,-0.064 3.392,-0.064 2.4,0 3.52,1.248 3.52,5.696 0,4.288 -1.216,5.12 -2.944,5.12 z m 14.94401,-10.688 h 2.976 v 19.872 c 0,0.672 -0.16,1.184 -0.512,1.504 -0.384,0.352 -0.96,0.512 -1.856,0.512 -1.568,0 -2.144,-0.544 -2.144,-1.28 0,-1.152 1.408,-1.056 1.408,-2.4 0,-1.056 -0.896,-1.696 -1.92,-1.696 -1.056,0 -2.016,0.704 -2.016,2.272 0,2.368 2.208,3.616 4.8,3.616 4.896,0 5.952,-4.544 5.952,-9.92 v -12.48 h 2.976 v -0.512 h -9.664 z m 14.46401,8.256 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15997,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z"
+           id="path12" /><path
+           style="stroke:none"
+           d="m 225.27964,617.03951 v 0.512 h 2.976 l -5.728,17.184 -5.408,-17.184 h 2.976 v -0.512 h -9.632 v 0.512 h 2.496 l 2.144,6.336 -3.648,10.848 -5.408,-17.184 h 2.496 v -0.512 h -9.152 v 0.512 h 2.496 l 7.552,22.4 h 0.992 l 5.024,-15.008 5.056,15.008 h 0.992 l 7.456,-22.4 h 1.856 v -0.512 z m 6.81602,0 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 2.976 v -0.512 z m 26.68799,0 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 17.888,-0.128 c -1.408,0 -2.912,0.128 -4.608,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 5.28 c 1.696,0 3.136,0.128 4.544,0.128 8.8,0 11.872,-4.832 11.872,-11.36 0,-7.648 -4.224,-11.296 -11.808,-11.296 z m -0.608,22.144 c -0.832,0 -1.728,-0.032 -2.592,-0.064 v -21.504 c 0.864,-0.032 1.856,-0.064 2.624,-0.064 4.992,0 8.224,1.344 8.224,11.136 0,9.088 -2.784,10.496 -8.256,10.496 z m 38.84795,-22.016 v 0.512 h 2.976 l -5.728,17.184 -5.408,-17.184 h 2.976 v -0.512 h -9.632 v 0.512 h 2.496 l 2.144,6.336 -3.648,10.848 -5.408,-17.184 h 2.496 v -0.512 h -9.152 v 0.512 h 2.496 l 7.552,22.4 h 0.992 l 5.024,-15.008 5.056,15.008 h 0.992 l 7.456,-22.4 h 1.856 v -0.512 z m 21.376,21.888 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 37.60002,7.616 c -0.224,0.416 -0.64,0.672 -1.088,0.672 -1.728,0 -2.08,-4.672 -2.464,-6.848 -0.64,-3.616 -2.08,-4.096 -4.576,-4.256 v -0.064 c 2.688,-0.384 5.088,-1.952 5.088,-5.632 0,-4.16 -3.072,-5.696 -6.72,-5.696 -1.056,0 -3.808,0.128 -5.44,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -10.048 h 3.264 c 2.272,0 2.72,2.336 3.296,5.44 0.576,3.104 1.248,5.632 4.992,5.632 1.408,0 2.144,-0.352 2.56,-1.024 z m -9.824,-10.496 h -3.968 v -10.752 c 0.864,-0.032 2.976,-0.064 3.392,-0.064 2.4,0 3.52,1.248 3.52,5.696 0,4.288 -1.216,5.12 -2.944,5.12 z m 20.76801,-11.328 c -1.408,0 -2.912,0.128 -4.608,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 5.28 c 1.696,0 3.136,0.128 4.544,0.128 8.8,0 11.872,-4.832 11.872,-11.36 0,-7.648 -4.224,-11.296 -11.808,-11.296 z m -0.608,22.144 c -0.832,0 -1.728,-0.032 -2.592,-0.064 v -21.504 c 0.864,-0.032 1.856,-0.064 2.624,-0.064 4.992,0 8.224,1.344 8.224,11.136 0,9.088 -2.784,10.496 -8.256,10.496 z m 17.75998,-13.248 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15997,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 27.48797,-7.52 c 0,-7.136 -5.152,-11.712 -11.04,-11.712 -5.888,0 -11.072,4.576 -11.072,11.712 0,7.136 5.184,11.712 11.072,11.712 5.888,0 11.04,-4.576 11.04,-11.712 z m -11.04,11.2 c -4.352,0 -6.912,-3.232 -6.912,-11.168 0,-7.936 2.56,-11.232 6.912,-11.232 4.352,0 6.88,3.264 6.88,11.2 0,7.936 -2.528,11.2 -6.88,11.2 z m 32.992,-0.704 c -0.224,0.416 -0.64,0.672 -1.088,0.672 -1.728,0 -2.08,-4.672 -2.464,-6.848 -0.64,-3.616 -2.08,-4.096 -4.576,-4.256 v -0.064 c 2.688,-0.384 5.088,-1.952 5.088,-5.632 0,-4.16 -3.072,-5.696 -6.72,-5.696 -1.056,0 -3.808,0.128 -5.44,0.128 h -5.28 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -10.048 h 3.264 c 2.272,0 2.72,2.336 3.296,5.44 0.576,3.104 1.248,5.632 4.992,5.632 1.408,0 2.144,-0.352 2.56,-1.024 z m -9.824,-10.496 h -3.968 v -10.752 c 0.864,-0.032 2.976,-0.064 3.392,-0.064 2.4,0 3.52,1.248 3.52,5.696 0,4.288 -1.216,5.12 -2.944,5.12 z m 10.88001,-11.2 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 2.976 v -0.512 z m 26.68798,0 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 10.68799,8.768 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15997,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 20.38398,-18.72 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 8,0 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 2.976 v -0.512 z m 32.70398,12.992 h -8.448 v 0.512 h 3.744 c -0.064,6.592 -2.08,8.896 -5.568,8.896 -4.16,0 -7.136,-3.36 -7.136,-11.456 0,-7.84 2.816,-10.944 7.008,-10.944 4.032,0 6.528,2.88 6.912,6.4 h 0.32 v -6.4 h -0.512 c -0.16,0.544 -0.512,0.832 -1.152,0.832 -1.376,0 -2.08,-1.344 -5.408,-1.344 -6.272,0 -11.328,4.8 -11.328,11.84 0,7.04 5.088,11.584 10.752,11.584 3.968,0 6.048,-2.304 7.424,-2.304 0.64,0 0.896,0.512 1.12,0.928 h 0.512 v -8.032 h 1.76 z m 24.96003,-12.48 v -0.512 h -9.344 v 0.512 h 2.656 v 10.112 h -10.304 v -10.112 h 2.656 v -0.512 h -9.344 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 9.344 v -0.512 h -2.656 v -10.624 h 10.304 v 10.624 h -2.656 v 0.512 h 9.344 v -0.512 h -2.976 v -21.376 z m 21.69597,-0.512 h -19.776 v 4.928 h 0.384 c 0.512,-2.464 1.44,-4.416 6.08,-4.416 h 1.568 v 21.376 h -2.976 v 0.512 h 9.664 v -0.512 h -2.976 v -21.376 h 1.568 c 4.64,0 5.568,1.952 6.08,4.416 h 0.384 z m 9.75998,22.912 c 5.152,0 8.32,-3.104 8.32,-6.976 0,-4.672 -4.576,-6.144 -7.008,-7.104 -4.16,-1.632 -5.6,-2.848 -5.6,-5.056 0,-2.368 1.664,-3.776 4.544,-3.776 3.488,0 5.28,2.176 5.76,5.28 h 0.384 v -5.28 h -0.512 c 0,0.224 -0.224,0.512 -0.768,0.512 -1.376,0 -2.528,-1.024 -5.248,-1.024 -4.416,0 -6.88,2.56 -6.88,5.792 0,3.488 2.528,5.312 6.272,6.848 4,1.632 6.176,2.816 6.176,5.888 0,2.368 -1.312,4.384 -5.504,4.384 -3.808,0 -6.336,-1.696 -6.304,-7.04 h -0.384 l -0.384,7.04 h 0.512 c 0.032,-0.352 0.32,-0.672 0.832,-0.672 0.992,0 2.592,1.184 5.792,1.184 z m 27.64796,-7.552 c -0.128,3.2 -1.12,6.528 -6.08,6.528 h -5.184 v -10.688 h 3.072 c 2.272,0 2.816,2.368 3.136,4.704 h 0.384 v -10.016 h -0.384 c -0.32,2.336 -0.896,4.672 -3.136,4.672 h -3.072 v -10.048 h 4.32 c 4.96,0 5.952,2.592 6.08,4.416 h 0.384 v -4.928 h -17.472 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.336 v -7.04 z m 20.70398,6.528 -7.936,-22.4 h -1.28 l -7.744,22.4 h -1.856 v 0.512 h 5.536 v -0.512 h -2.976 l 2.464,-7.168 h 7.264 l 2.464,7.168 h -2.496 v 0.512 h 9.056 v -0.512 z m -13.568,-7.808 3.424,-9.92 3.392,9.92 z m 20.44802,-5.312 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 8.15998,-9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 0,9.952 c -1.056,0 -1.952,0.864 -1.952,1.984 0,1.12 0.896,1.952 1.952,1.952 1.056,0 1.984,-0.832 1.984,-1.952 0,-1.12 -0.928,-1.984 -1.984,-1.984 z m 22.78397,-3.36 c -0.128,3.2 -1.12,6.528 -6.08,6.528 h -5.184 v -10.688 h 3.072 c 2.272,0 2.816,2.368 3.136,4.704 h 0.384 v -10.016 h -0.384 c -0.32,2.336 -0.896,4.672 -3.136,4.672 h -3.072 v -10.048 h 4.32 c 4.96,0 5.952,2.592 6.08,4.416 h 0.384 v -4.928 h -17.472 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 18.336 v -7.04 z m 25.11995,-4.16 c 0,-7.136 -5.152,-11.712 -11.04,-11.712 -5.888,0 -11.072,4.576 -11.072,11.712 0,7.136 5.184,11.712 11.072,11.712 5.888,0 11.04,-4.576 11.04,-11.712 z m -11.04,11.2 c -4.352,0 -6.912,-3.232 -6.912,-11.168 0,-7.936 2.56,-11.232 6.912,-11.232 4.352,0 6.88,3.264 6.88,11.2 0,7.936 -2.528,11.2 -6.88,11.2 z m 28.064,-22.4 v 0.512 h 2.976 v 15.616 h -0.128 l -12.32,-16.128 h -6.08 v 0.512 h 2.976 v 21.376 h -2.976 v 0.512 h 6.72 v -0.512 h -2.976 v -18.624 h 0.128 l 14.656,19.392 h 0.768 v -22.144 h 2.976 v -0.512 z m 16.16,22.912 c 5.152,0 8.32,-3.104 8.32,-6.976 0,-4.672 -4.576,-6.144 -7.008,-7.104 -4.16,-1.632 -5.6,-2.848 -5.6,-5.056 0,-2.368 1.664,-3.776 4.544,-3.776 3.488,0 5.28,2.176 5.76,5.28 h 0.384 v -5.28 h -0.512 c 0,0.224 -0.224,0.512 -0.768,0.512 -1.376,0 -2.528,-1.024 -5.248,-1.024 -4.416,0 -6.88,2.56 -6.88,5.792 0,3.488 2.528,5.312 6.272,6.848 4,1.632 6.176,2.816 6.176,5.888 0,2.368 -1.312,4.384 -5.504,4.384 -3.808,0 -6.336,-1.696 -6.304,-7.04 h -0.384 l -0.384,7.04 h 0.512 c 0.032,-0.352 0.32,-0.672 0.832,-0.672 0.992,0 2.592,1.184 5.792,1.184 z"
+           id="path13" /></g></g></g></svg>
+
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Docs Section -->
+    <section class="docs section" id="docs">
+        <div class="container">
+            <h2 class="section-title">Documentation & Resources</h2>
+            <p class="section-subtitle">Everything you need to start implementing CAIRNIMI in your applications.</p>
+            
+            <div class="docs-links">
+
+                <a href="math.html" class="docs-link">
+                    <div class="docs-link-icon">🌏</div>
+                    <h3 class="docs-link-title">The Math</h3>
+                    <p class="docs-link-desc">Learn how the codes are generated, the Vocabulary sets, and the mathematical justification behind the process.</p>
+                </a>
+
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">💻</div>
+                    <h3 class="docs-link-title">Code Examples</h3>
+                    <p class="docs-link-desc">Sample implementations and tutorials for common use cases.</p>
+                </a>
+
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">📚</div>
+                    <h3 class="docs-link-title">API Documentation</h3>
+                    <p class="docs-link-desc">Complete reference for the CAIRNIMI API, including endpoints, parameters, and response formats.</p>
+                </a>
+                
+                
+                
+                <a href="#" class="docs-link">
+                    <div class="docs-link-icon">🔗</div>
+                    <h3 class="docs-link-title">Link with other projects</h3>
+                    <p class="docs-link-desc">Here you can find limited support on third party projects.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+      
+      
+      
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="footer-logo">
+                        <svg
+                        width="15mm"
+                        height="15mm"
+                        viewBox="0 0 238.11064 230.55114"
+                        version="1.1"
+                        id="svg1"
+                        xml:space="preserve"
+                        inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+                        sodipodi:docname="logo_2.svg"
+                        inkscape:export-filename="BG.png"
+                        inkscape:export-xdpi="96"
+                        inkscape:export-ydpi="96"
+                        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                          id="namedview1"
+                          pagecolor="#ffffff"
+                          bordercolor="#000000"
+                          borderopacity="0.25"
+                          inkscape:showpageshadow="2"
+                          inkscape:pageopacity="0.0"
+                          inkscape:pagecheckerboard="0"
+                          inkscape:deskcolor="#d1d1d1"
+                          inkscape:document-units="mm"
+                          showgrid="true"
+                          inkscape:zoom="5.5267742"
+                          inkscape:cx="19.450768"
+                          inkscape:cy="4.9757777"
+                          inkscape:window-width="1176"
+                          inkscape:window-height="1052"
+                          inkscape:window-x="743"
+                          inkscape:window-y="0"
+                          inkscape:window-maximized="0"
+                          inkscape:current-layer="layer1"><inkscape:grid
+                            id="grid1"
+                            units="mm"
+                            originx="0"
+                            originy="0"
+                            spacingx="1.0000005"
+                            spacingy="1"
+                            empcolor="#0099e5"
+                            empopacity="0.30196078"
+                            color="#0099e5"
+                            opacity="0.14901961"
+                            empspacing="5"
+                            enabled="true"
+                            visible="true" /></sodipodi:namedview><defs
+                          id="defs1" /><g
+                          inkscape:label="Ebene 1"
+                          inkscape:groupmode="layer"
+                          id="layer1"><path
+                            id="path3"
+                            style="fill:none;fill-opacity:0.996078;stroke:#d71d03;stroke-width:6.04725;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                            d="m 195.30308,-207.30373 -38.65801,68.03489 H 79.329035 l -38.658013,-68.03489 38.658013,-68.0349"
+                            sodipodi:nodetypes="ccccc" /><g
+                            id="g1"
+                            transform="matrix(-0.15841219,-0.96083331,0.99876702,-0.15239561,13.059161,240.19782)"><path
+                              id="path1"
+                              style="fill:none;fill-opacity:0.996078;stroke:#03d8bd;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="m 140.53653,85.994416 19.46355,34.160494 -19.46355,34.16048 h -38.92709"
+                              sodipodi:nodetypes="cccc" /><path
+                              id="path4"
+                              style="fill:none;fill-opacity:0.996078;stroke:#25d103;stroke-width:8.40001;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="m 209.37556,118.82202 -38.75093,64.63311 M 54.371827,118.82202 93.122764,54.188918 h 77.501866 l 38.75093,64.633102"
+                              sodipodi:nodetypes="cccccc" /><path
+                              id="path5"
+                              style="fill:none;fill-opacity:0.996078;stroke:#eba603;stroke-width:8.91908;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+                              d="M 178.66897,213.7324 H 68.7981 L 13.86267,117.53628 68.7981,21.340137"
+                              sodipodi:nodetypes="cccc" /></g></g></svg>
+                              &nbsp;&nbsp;&nbsp;&nbsp; CAIRNIMI
+                    </a>
+                    <p class="footer-about">A revolutionary spatial indexing system that encodes geographic and abstract locations into a unified format for the future of spatial intelligence.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.5 4.865 20.306 8.84 21.5C9.34 21.58 9.52 21.27 9.52 21C9.52 20.77 9.515 20.14 9.51 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.67 21.59 15.19 21.5C19.14 20.3 22 16.5 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.46 6C21.69 6.35 20.86 6.58 20 6.69C20.88 6.16 21.56 5.32 21.88 4.31C21.05 4.81 20.13 5.16 19.16 5.36C18.37 4.5 17.26 4 16 4C13.65 4 11.73 5.92 11.73 8.29C11.73 8.63 11.77 8.96 11.84 9.27C8.28 9.09 5.11 7.38 3 4.79C2.63 5.42 2.42 6.16 2.42 6.94C2.42 8.43 3.17 9.75 4.33 10.5C3.62 10.5 2.96 10.3 2.38 10V10.03C2.38 12.11 3.86 13.85 5.82 14.24C5.46 14.34 5.08 14.39 4.69 14.39C4.42 14.39 4.15 14.36 3.89 14.31C4.43 16 6 17.26 7.89 17.29C6.43 18.45 4.58 19.13 2.56 19.13C2.22 19.13 1.88 19.11 1.54 19.07C3.44 20.29 5.7 21 8.12 21C16 21 20.33 14.46 20.33 8.79C20.33 8.6 20.33 8.42 20.32 8.23C21.16 7.63 21.88 6.87 22.46 6Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM8.5 18.5H5.5V8.5H8.5V18.5ZM7 7.5C6.17 7.5 5.5 6.83 5.5 6C5.5 5.17 6.17 4.5 7 4.5C7.83 4.5 8.5 5.17 8.5 6C8.5 6.83 7.83 7.5 7 7.5ZM18.5 18.5H15.5V13.9C15.5 12.7 14.5 11.8 13.3 11.8C12.1 11.8 11.1 12.7 11.1 13.9V18.5H8.5V8.5H11.1V9.8C11.6 9.3 12.5 8.5 13.3 8.5C16.1 8.5 18.5 10.9 18.5 13.7V18.5Z" fill="currentColor"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Explore</h3>
+                    <ul>
+                        <li><a href="#about">About CAIRNIMI</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#applications">Applications</a></li>
+                        <li><a href="#visual-codes">Visual Codes</a></li>
+                        <li><a href="#docs">Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Getting Started</a></li>
+                        <li><a href="#">Technical Papers</a></li>
+                        <li><a href="casestudies.html">Case Studies</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><a href="#">info@monsoonresearch.cc</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Press Inquiries</a></li>
+                        <li><a href="#">Partnerships</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="copyright">
+                    © 2025 <span>Vernal Systems / Monsoon Researches</span> / CAIRNIMI. All rights reserved.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">License</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add scroll animation for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
+            } else {
+                header.style.boxShadow = 'none';
+            }
+        });
+        
+        // Create random hexagons
+        function createHexagons() {
+            const hexBackground = document.querySelector('.hex-background');
+            for (let i = 0; i < 6; i++) {
+                const hex = document.createElement('div');
+                hex.classList.add('hex');
+                const size = Math.random() * 40 + 20;
+                hex.style.width = `${size}px`;
+                hex.style.height = `${size}px`;
+                hex.style.left = `${Math.random() * 100}%`;
+                hex.style.top = `${Math.random() * 100 + 75}%`;
+                hex.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                hex.style.animationDelay = `${Math.random() * 10}s`;
+                hexBackground.appendChild(hex);
+            }
+        }
+        
+        
+    </script>
+
+
+<script>
+    document.querySelectorAll('.tab-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+  
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  
+        button.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+  </script>
+
+<script>
+    const buttons = document.querySelectorAll('.tab-button-prps');
+    const sections = document.querySelectorAll('.tab-content-prps section');
+  
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.add('hidden-prps'));
+  
+        btn.classList.add('active');
+        console.log(btn.dataset.tab)
+        document.getElementById(btn.dataset.tab).classList.remove('hidden-prps');
+      });
+    });
+  </script>
+</body>
+</html>
